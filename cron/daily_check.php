@@ -37,7 +37,7 @@ $expiring_soon = $pdo_global->query("
     SELECT * FROM tenants
     WHERE status = 'aktif'
       AND tanggal_expire IS NOT NULL
-      AND tanggal_expire = DATE_ADD('$today', INTERVAL 7 DAY)
+      AND tanggal_expire = '$today'::date + INTERVAL '7 days'
 ")->fetchAll();
 
 foreach ($expiring_soon as $t) {
@@ -48,7 +48,7 @@ foreach ($expiring_soon as $t) {
         'nama_lembaga' => $t['nama_lembaga'],
         'sisa_hari'    => 7,
         'expire'       => date('d M Y', strtotime($t['tanggal_expire'])),
-        'renew_url'    => $base_url . 'sales/checkout.php',
+        'renew_url'    => $base_url . 'checkout.php',
     ]);
     $log[] = "WARNED (7d): {$t['nama_lembaga']} ({$t['email']}) - expire {$t['tanggal_expire']}";
 }
@@ -58,7 +58,7 @@ $expiring_tomorrow = $pdo_global->query("
     SELECT * FROM tenants
     WHERE status = 'aktif'
       AND tanggal_expire IS NOT NULL
-      AND tanggal_expire = DATE_ADD('$today', INTERVAL 1 DAY)
+      AND tanggal_expire = '$today'::date + INTERVAL '1 day'
 ")->fetchAll();
 
 foreach ($expiring_tomorrow as $t) {
@@ -69,7 +69,7 @@ foreach ($expiring_tomorrow as $t) {
         'nama_lembaga' => $t['nama_lembaga'],
         'sisa_hari'    => 1,
         'expire'       => date('d M Y', strtotime($t['tanggal_expire'])),
-        'renew_url'    => $base_url . 'sales/checkout.php',
+        'renew_url'    => $base_url . 'checkout.php',
     ]);
     $log[] = "WARNED (1d): {$t['nama_lembaga']} ({$t['email']}) - expire besok";
 }

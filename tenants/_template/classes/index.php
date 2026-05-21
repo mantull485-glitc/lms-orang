@@ -2,8 +2,13 @@
 session_start();
 require_once '../config/tenant_guard.php';
 require_once '../config/database.php';
+require_once '../config/tenant_settings.php';
 
-$stmt = $pdo->query("SELECT * FROM classes ORDER BY jadwal ASC");
+$brand = getTenantBranding($pdo);
+$nama = $brand['nama_lembaga'];
+
+$stmt = $pdo->prepare("SELECT * FROM classes WHERE tenant_id = ? ORDER BY jadwal ASC");
+$stmt->execute([$GLOBALS['tenant_id'] ?? 0]);
 $classes = $stmt->fetchAll();
 ?>
 <!DOCTYPE html>
@@ -11,7 +16,7 @@ $classes = $stmt->fetchAll();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Katalog Kelas - LPK Lunarica</title>
+    <title>Katalog Kelas - <?= htmlspecialchars($nama); ?></title>
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="../assets/css/style.css?v=<?= time(); ?>">
@@ -19,6 +24,7 @@ $classes = $stmt->fetchAll();
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <!-- AOS Animation -->
     <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <?php outputBrandingCSS($brand); ?>
     <style>
         .section-premium {
             min-height: 40vh;
@@ -35,7 +41,14 @@ $classes = $stmt->fetchAll();
 <!-- Navbar -->
 <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
     <div class="container">
-        <a class="navbar-brand fw-bold" href="../index.php">LPK Lunarica</a>
+        <a class="navbar-brand fw-bold d-flex align-items-center gap-2" href="../index.php">
+            <?php if (!empty($brand['logo']) && file_exists(dirname(__DIR__).'/assets/img/'.$brand['logo'])): ?>
+            <img src="../assets/img/<?= htmlspecialchars($brand['logo']) ?>" style="height:36px;width:auto;object-fit:contain" alt="<?= htmlspecialchars($nama) ?>">
+            <?php else: ?>
+            <div class="bg-primary rounded-2 d-flex align-items-center justify-content-center" style="width:32px;height:32px"><i class="fas fa-graduation-cap text-white"></i></div>
+            <span class="text-primary"><?= htmlspecialchars($nama) ?></span>
+            <?php endif; ?>
+        </a>
         <button class="navbar-toggler border-0 shadow-none" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
@@ -150,7 +163,7 @@ $classes = $stmt->fetchAll();
 <!-- Footer -->
 <footer class="footer-custom pb-4 pt-5 mt-auto">
     <div class="container text-center text-muted">
-        <p class="mb-0">&copy; <?= date('Y'); ?> LPK Lunarica. All rights reserved.</p>
+        <p class="mb-0">&copy; <?= date('Y'); ?> <?= htmlspecialchars($nama); ?>. All rights reserved.</p>
     </div>
 </footer>
 

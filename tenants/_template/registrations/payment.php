@@ -2,6 +2,7 @@
 session_start();
 require_once '../config/tenant_guard.php';
 require_once '../config/database.php';
+require_once '../config/tenant_settings.php';
 
 // Only logged in users can register/pay
 if (!isset($_SESSION['user_id'])) {
@@ -20,12 +21,16 @@ if (!isset($_GET['class_id'])) {
     exit; 
 }
 
+$brand = getTenantBranding($pdo);
+$nama = $brand['nama_lembaga'];
+$tenant_id = $GLOBALS['tenant_id'] ?? 0;
+
 $class_id = intval($_GET['class_id']);
 $user_id = $_SESSION['user_id'];
 
 // Check if class exists
-$stmt_class = $pdo->prepare("SELECT * FROM classes WHERE id = ?");
-$stmt_class->execute([$class_id]);
+$stmt_class = $pdo->prepare("SELECT * FROM classes WHERE id = ? AND tenant_id = ?");
+$stmt_class->execute([$class_id, $tenant_id]);
 $class = $stmt_class->fetch();
 
 if (!$class) {
@@ -45,8 +50,8 @@ if ($final_price <= 0) {
 }
 
 // Check if already registered
-$stmt_check = $pdo->prepare("SELECT id FROM registrations WHERE user_id = ? AND class_id = ?");
-$stmt_check->execute([$user_id, $class_id]);
+$stmt_check = $pdo->prepare("SELECT id FROM registrations WHERE user_id = ? AND class_id = ? AND tenant_id = ?");
+$stmt_check->execute([$user_id, $class_id, $tenant_id]);
 if ($stmt_check->fetch()) {
     $_SESSION['flash_error'] = "Anda sudah terdaftar di kelas ini!";
     header("Location: ../classes/detail.php?id=" . $class_id);
@@ -77,8 +82,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['bukti_bayar'])) {
         
         if (move_uploaded_file($file['tmp_name'], $destination)) {
             try {
-                $stmt = $pdo->prepare("INSERT INTO registrations (user_id, class_id, status, bukti_bayar, harga_saat_daftar, metode_pembayaran) VALUES (?, ?, 'pending', ?, ?, ?)");
-                $stmt->execute([$user_id, $class_id, $db_filepath, $final_price, $method]);
+                $stmt = $pdo->prepare("INSERT INTO registrations (tenant_id, user_id, class_id, status, bukti_bayar, harga_saat_daftar, metode_pembayaran) VALUES (?, ?, ?, 'pending', ?, ?, ?)");
+                $stmt->execute([$tenant_id, $user_id, $class_id, $db_filepath, $final_price, $method]);
                 $_SESSION['flash_message'] = "Pendaftaran berhasil! Pembayaran sedang diverifikasi Admin.";
                 header("Location: ../user/dashboard.php");
                 exit;
@@ -96,10 +101,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['bukti_bayar'])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Selesaikan Pembayaran - LPK Lunarica</title>
+    <title>Selesaikan Pembayaran - <?= htmlspecialchars($nama); ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="../assets/css/style.css?v=<?= time(); ?>">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <?php outputBrandingCSS($brand); ?>
     <style>
         body { padding-top: 65px; }
 
@@ -201,11 +207,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['bukti_bayar'])) {
      style="background: rgba(15,23,42,0.95); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(255,255,255,0.06);">
     <div class="container d-flex justify-content-between align-items-center">
         <a class="navbar-brand fw-bold d-flex align-items-center gap-2" href="../index.php">
+            <?php if (!empty($brand['logo']) && file_exists(dirname(__DIR__).'/assets/img/'.$brand['logo'])): ?>
+            <img src="../assets/img/<?= htmlspecialchars($brand['logo']) ?>" style="height:28px;width:auto;object-fit:contain" alt="<?= htmlspecialchars($nama) ?>">
+            <?php else: ?>
             <div class="bg-primary rounded-2 d-flex align-items-center justify-content-center"
                  style="width:28px;height:28px;">
                 <i class="fas fa-graduation-cap text-white" style="font-size:0.75rem;"></i>
             </div>
-            <span>LPK Lunarica</span>
+            <?php endif; ?>
+            <span><?= htmlspecialchars($nama); ?></span>
         </a>
         <a href="../classes/index.php" class="btn btn-outline-light btn-sm rounded-pill px-3">
             <i class="fas fa-arrow-left me-1"></i>
@@ -277,8 +287,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['bukti_bayar'])) {
                         <div id="instr_transfer_bank" class="instruction-box active mb-4">
                             <div class="text-center">
                                 <div class="extra-small text-muted fw-bold mb-2">Transfer tepat sesuai nominal ke:</div>
-                                <h5 class="fw-bold text-white mb-1">BCA - 1234567890</h5>
-                                <p class="mb-0 extra-small text-muted">a.n LPK Lunarica Indonesia</p>
+                                <h5 class="fw-bold text-white mb-1"><?= htmlspecialchars(getSetting($pdo, 'nama_bank', 'BCA')) ?> - <?= htmlspecialchars(getSetting($pdo, 'no_rekening', '1234567890')) ?></h5>
+                                <p class="mb-0 extra-small text-muted">a.n <?= htmlspecialchars(getSetting($pdo, 'nama_rekening', $nama)) ?></p>
                             </div>
                         </div>
 
@@ -300,7 +310,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['bukti_bayar'])) {
                                         </div>
                                     </div>
                                 </div>
-                                <p class="mt-2 mb-0 extra-small text-muted">a.n LPK Lunarica Indonesia</p>
+                                <p class="mt-2 mb-0 extra-small text-muted">a.n <?= htmlspecialchars(getSetting($pdo, 'nama_rekening', $nama)) ?></p>
                             </div>
                         </div>
 

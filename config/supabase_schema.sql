@@ -142,12 +142,14 @@ CREATE TABLE IF NOT EXISTS team (
 CREATE TABLE IF NOT EXISTS certificates (
     id SERIAL PRIMARY KEY,
     tenant_id INTEGER NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
-    user_id INTEGER REFERENCES users(id),
-    registration_id INTEGER REFERENCES registrations(id),
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    class_id INTEGER REFERENCES classes(id) ON DELETE CASCADE,
+    registration_id INTEGER REFERENCES registrations(id) ON DELETE CASCADE,
     nomor_sertifikat VARCHAR(100),
     file_path VARCHAR(255),
     tanggal_terbit TIMESTAMP DEFAULT NOW(),
-    created_at TIMESTAMP DEFAULT NOW()
+    created_at TIMESTAMP DEFAULT NOW(),
+    UNIQUE(tenant_id, user_id, class_id)
 );
 
 -- ──────────────────────────────────────────────

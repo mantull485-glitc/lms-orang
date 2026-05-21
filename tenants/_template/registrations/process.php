@@ -19,9 +19,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register_class'])) {
     $class_id = $_POST['class_id'];
     $user_id = $_SESSION['user_id'];
 
+    $tenant_id = $GLOBALS['tenant_id'] ?? 0;
+
     // Validate if class exists
-    $stmt_class = $pdo->prepare("SELECT * FROM classes WHERE id = ?");
-    $stmt_class->execute([$class_id]);
+    $stmt_class = $pdo->prepare("SELECT * FROM classes WHERE id = ? AND tenant_id = ?");
+    $stmt_class->execute([$class_id, $tenant_id]);
     $class = $stmt_class->fetch();
     if (!$class) {
         $_SESSION['flash_error'] = "Kelas tidak ditemukan!";
@@ -37,16 +39,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register_class'])) {
     }
 
     // Check if already registered
-    $stmt_check = $pdo->prepare("SELECT id FROM registrations WHERE user_id = ? AND class_id = ?");
-    $stmt_check->execute([$user_id, $class_id]);
+    $stmt_check = $pdo->prepare("SELECT id FROM registrations WHERE user_id = ? AND class_id = ? AND tenant_id = ?");
+    $stmt_check->execute([$user_id, $class_id, $tenant_id]);
     
     if ($stmt_check->fetch()) {
         $_SESSION['flash_error'] = "Anda sudah terdaftar di kelas ini!";
     } else {
         // Register user to class
         try {
-            $stmt = $pdo->prepare("INSERT INTO registrations (user_id, class_id, status, bukti_bayar) VALUES (?, ?, 'pending', NULL)");
-            $stmt->execute([$user_id, $class_id]);
+            $stmt = $pdo->prepare("INSERT INTO registrations (tenant_id, user_id, class_id, status, bukti_bayar) VALUES (?, ?, ?, 'pending', NULL)");
+            $stmt->execute([$tenant_id, $user_id, $class_id]);
             $_SESSION['flash_message'] = "Pendaftaran berhasil! Status menunggu persetujuan admin.";
         } catch (PDOException $e) {
             $_SESSION['flash_error'] = "Gagal mendaftar: " . $e->getMessage();

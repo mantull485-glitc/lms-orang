@@ -2,6 +2,7 @@
 session_start();
 require_once '../config/tenant_guard.php';
 require_once '../config/database.php';
+require_once '../config/tenant_settings.php';
 
 if (!isset($_SESSION['user_id'])) {
     header("Location: ../auth/login.php");
@@ -13,23 +14,27 @@ if ($_SESSION['role'] === 'admin') {
     exit;
 }
 
+$site_name = getSetting($pdo, 'site_name', 'LMS Platform');
+$site_logo = getSetting($pdo, 'site_logo', '');
+
 $user_id = $_SESSION['user_id'];
+$tenant_id = $GLOBALS['tenant_id'] ?? 0;
 
 // Fetch user data
-$stmt_user = $pdo->prepare("SELECT * FROM users WHERE id = ?");
-$stmt_user->execute([$user_id]);
+$stmt_user = $pdo->prepare("SELECT * FROM users WHERE id = ? AND tenant_id = ?");
+$stmt_user->execute([$user_id, $tenant_id]);
 $user = $stmt_user->fetch();
 
 // Fetch registrations
 $stmt_regs = $pdo->prepare("
     SELECT r.*, c.nama_kelas, c.jadwal, c.link_zoom, c.kategori, cert.file_path as cert_file
     FROM registrations r 
-    JOIN classes c ON r.class_id = c.id 
-    LEFT JOIN certificates cert ON r.user_id = cert.user_id AND r.class_id = cert.class_id
-    WHERE r.user_id = ? 
+    JOIN classes c ON r.class_id = c.id AND c.tenant_id = r.tenant_id
+    LEFT JOIN certificates cert ON r.user_id = cert.user_id AND r.class_id = cert.class_id AND cert.tenant_id = r.tenant_id
+    WHERE r.user_id = ? AND r.tenant_id = ?
     ORDER BY r.tanggal_daftar DESC
 ");
-$stmt_regs->execute([$user_id]);
+$stmt_regs->execute([$user_id, $tenant_id]);
 $registrations = $stmt_regs->fetchAll();
 ?>
 <!DOCTYPE html>
@@ -38,7 +43,7 @@ $registrations = $stmt_regs->fetchAll();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Member Dashboard - LPK Lunarica</title>
+    <title>Member Dashboard - <?= htmlspecialchars($site_name); ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="../assets/css/style.css?v=<?= time(); ?>">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -50,11 +55,15 @@ $registrations = $stmt_regs->fetchAll();
     <nav class="navbar navbar-expand-lg navbar-dark bg-navy fixed-top px-lg-5 shadow-sm">
         <div class="container-fluid">
             <a class="navbar-brand fw-bold d-flex align-items-center gap-2" href="../index.php">
-                <div class="bg-primary rounded-2 d-flex align-items-center justify-content-center"
-                    style="width: 32px; height: 32px;">
-                    <i class="fas fa-graduation-cap text-white fs-6"></i>
-                </div>
-                <span>LPK Lunarica</span>
+                <?php if ($site_logo && file_exists(dirname(__DIR__).'/assets/img/'.$site_logo)): ?>
+                    <img src="../assets/img/<?= htmlspecialchars($site_logo); ?>" style="height: 32px; width: auto; object-fit: contain; border-radius: 4px;" alt="">
+                <?php else: ?>
+                    <div class="bg-primary rounded-2 d-flex align-items-center justify-content-center"
+                        style="width: 32px; height: 32px;">
+                        <i class="fas fa-graduation-cap text-white fs-6"></i>
+                    </div>
+                <?php endif; ?>
+                <span><?= htmlspecialchars($site_name); ?></span>
             </a>
             <button class="navbar-toggler border-0 shadow-none" type="button" data-bs-toggle="collapse"
                 data-bs-target="#navbarNav">
@@ -235,7 +244,7 @@ $registrations = $stmt_regs->fetchAll();
     <!-- Footer -->
     <footer class="py-4 border-top mt-5" style="border-color: rgba(255,255,255,0.1) !important;">
         <div class="container text-center">
-            <p class="text-muted extra-small mb-0">&copy; <?= date('Y'); ?> LPK Lunarica. Dibuat dengan &hearts; untuk
+            <p class="text-muted extra-small mb-0">&copy; <?= date('Y'); ?> <?= htmlspecialchars($site_name); ?>. Dibuat dengan &hearts; untuk
                 masa depan yang lebih baik.</p>
         </div>
     </footer>

@@ -2,6 +2,7 @@
 session_start();
 require_once '../config/tenant_guard.php';
 require_once '../config/database.php';
+$tenant_id = $GLOBALS['tenant_id'] ?? 0;
 
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
     header("Location: ../auth/login.php");
@@ -16,8 +17,8 @@ if ($action === 'upload' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $class_id = intval($_POST['class_id']);
     $nomor_sertifikat = trim($_POST['nomor_sertifikat']);
     
-    $stmt_check = $pdo->prepare("SELECT id, file_path FROM certificates WHERE user_id = ? AND class_id = ?");
-    $stmt_check->execute([$user_id, $class_id]);
+    $stmt_check = $pdo->prepare("SELECT id, file_path FROM certificates WHERE user_id = ? AND class_id = ? AND tenant_id = ?");
+    $stmt_check->execute([$user_id, $class_id, $tenant_id]);
     $existing = $stmt_check->fetch();
 
     if (isset($_FILES['file_sertifikat']) && $_FILES['file_sertifikat']['error'] === UPLOAD_ERR_OK) {
@@ -44,12 +45,12 @@ if ($action === 'upload' && $_SERVER['REQUEST_METHOD'] === 'POST') {
                     if (file_exists('../' . $existing['file_path'])) {
                         unlink('../' . $existing['file_path']);
                     }
-                    $stmt = $pdo->prepare("UPDATE certificates SET nomor_sertifikat = ?, file_path = ? WHERE id = ?");
-                    $stmt->execute([$nomor_sertifikat, $file_path, $existing['id']]);
+                    $stmt = $pdo->prepare("UPDATE certificates SET nomor_sertifikat = ?, file_path = ? WHERE id = ? AND tenant_id = ?");
+                    $stmt->execute([$nomor_sertifikat, $file_path, $existing['id'], $tenant_id]);
                     $_SESSION['flash_message'] = "Sertifikat berhasil diperbarui.";
                 } else {
-                    $stmt = $pdo->prepare("INSERT INTO certificates (user_id, class_id, nomor_sertifikat, file_path) VALUES (?, ?, ?, ?)");
-                    $stmt->execute([$user_id, $class_id, $nomor_sertifikat, $file_path]);
+                    $stmt = $pdo->prepare("INSERT INTO certificates (tenant_id, user_id, class_id, nomor_sertifikat, file_path) VALUES (?, ?, ?, ?, ?)");
+                    $stmt->execute([$tenant_id, $user_id, $class_id, $nomor_sertifikat, $file_path]);
                     $_SESSION['flash_message'] = "Sertifikat berhasil diunggah.";
                 }
             } else {
@@ -61,8 +62,8 @@ if ($action === 'upload' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
         // If not uploading a file but updated number
         if ($existing) {
-            $stmt = $pdo->prepare("UPDATE certificates SET nomor_sertifikat = ? WHERE id = ?");
-            $stmt->execute([$nomor_sertifikat, $existing['id']]);
+            $stmt = $pdo->prepare("UPDATE certificates SET nomor_sertifikat = ? WHERE id = ? AND tenant_id = ?");
+            $stmt->execute([$nomor_sertifikat, $existing['id'], $tenant_id]);
             $_SESSION['flash_message'] = "Nomor sertifikat berhasil diperbarui.";
         } else {
             $_SESSION['flash_error'] = "Gagal mengunggah file.";
@@ -76,16 +77,16 @@ if ($action === 'upload' && $_SERVER['REQUEST_METHOD'] === 'POST') {
 // Handle Delete Certificate
 if ($action === 'delete' && isset($_GET['id'])) {
     $id = intval($_GET['id']);
-    $stmt_check = $pdo->prepare("SELECT file_path FROM certificates WHERE id = ?");
-    $stmt_check->execute([$id]);
+    $stmt_check = $pdo->prepare("SELECT file_path FROM certificates WHERE id = ? AND tenant_id = ?");
+    $stmt_check->execute([$id, $tenant_id]);
     $cert = $stmt_check->fetch();
     
     if ($cert) {
         if (file_exists('../' . $cert['file_path'])) {
             unlink('../' . $cert['file_path']);
         }
-        $stmt_del = $pdo->prepare("DELETE FROM certificates WHERE id = ?");
-        $stmt_del->execute([$id]);
+        $stmt_del = $pdo->prepare("DELETE FROM certificates WHERE id = ? AND tenant_id = ?");
+        $stmt_del->execute([$id, $tenant_id]);
         $_SESSION['flash_message'] = "Sertifikat berhasil dihapus.";
     }
     header("Location: certificates.php");
@@ -93,16 +94,17 @@ if ($action === 'delete' && isset($_GET['id'])) {
 }
 
 // Fetch Records
-$stmt_data = $pdo->query("
+$stmt_data = $pdo->prepare("
     SELECT r.id as reg_id, r.user_id, r.class_id, u.nama, u.email, c.nama_kelas, c.kategori,
            cert.id as cert_id, cert.nomor_sertifikat, cert.file_path, cert.created_at as cert_date
     FROM registrations r
-    JOIN users u ON r.user_id = u.id
-    JOIN classes c ON r.class_id = c.id
-    LEFT JOIN certificates cert ON r.user_id = cert.user_id AND r.class_id = cert.class_id
-    WHERE r.status = 'selesai'
+    JOIN users u ON r.user_id = u.id AND u.tenant_id = r.tenant_id
+    JOIN classes c ON r.class_id = c.id AND c.tenant_id = r.tenant_id
+    LEFT JOIN certificates cert ON r.user_id = cert.user_id AND r.class_id = cert.class_id AND cert.tenant_id = r.tenant_id
+    WHERE r.status = 'selesai' AND r.tenant_id = ?
     ORDER BY r.tanggal_daftar DESC
 ");
+$stmt_data->execute([$tenant_id]);
 $records = $stmt_data->fetchAll();
 ?>
 <!DOCTYPE html>

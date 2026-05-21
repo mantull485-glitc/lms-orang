@@ -73,13 +73,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'], $_POST['ten
             $hapus_db     = ($_POST['hapus_db']     ?? '0') === '1';
             $hapus_folder = ($_POST['hapus_folder'] ?? '0') === '1';
 
-            // Hapus database tenant
-            if ($hapus_db && !empty($tenant['db_name'])) {
-                try {
-                    $raw = new PDO('mysql:host=localhost;charset=utf8mb4', SA_DB_USER, SA_DB_PASS, [PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION]);
-                    $raw->exec("DROP DATABASE IF EXISTS `" . preg_replace('/[^a-z0-9_]/', '', $tenant['db_name']) . "`");
-                } catch (PDOException $e) { /* lanjut meski gagal */ }
-            }
+            // Mode Supabase: data tenant dihapus otomatis via CASCADE saat DELETE FROM tenants
+            // Tidak perlu DROP DATABASE karena semua tenant berbagi 1 database PostgreSQL (Supabase)
 
             // Hapus folder tenant
             if ($hapus_folder && !empty($tenant['folder_path'])) {

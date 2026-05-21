@@ -8,19 +8,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
     exit;
 }
 
-// Auto-migrate if table doesn't exist
-try {
-    $pdo->exec("CREATE TABLE IF NOT EXISTS company_teams (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        nama VARCHAR(150) NOT NULL,
-        jabatan VARCHAR(150) NOT NULL,
-        deskripsi TEXT,
-        foto VARCHAR(255)
-    )");
-} catch (PDOException $e) {
-    die("ERROR CREATING TABLE: " . $e->getMessage());
-}
-
+$tenant_id = $GLOBALS['tenant_id'] ?? 0;
 $action = $_GET['action'] ?? 'list';
 
 // Handle Add Team Member
@@ -36,14 +24,18 @@ if ($action === 'add_process' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         if (in_array($ext, $allowed)) {
             $filename = uniqid('team_') . '.' . $ext;
             $destination = '../uploads/team/' . $filename;
-            if (move_uploaded_file($_FILES['foto']['tmp_name'], $destination)) {
+            // Create uploads directory if not exist
+            if (!is_dir('../uploads/team/')) {
+                @mkdir('../uploads/team/', 0755, true);
+            }
+            if (@move_uploaded_file($_FILES['foto']['tmp_name'], $destination)) {
                 $foto_path = 'uploads/team/' . $filename;
             }
         }
     }
 
-    $stmt = $pdo->prepare("INSERT INTO company_teams (nama, jabatan, deskripsi, foto) VALUES (?, ?, ?, ?)");
-    if ($stmt->execute([$nama, $jabatan, $deskripsi, $foto_path])) {
+    $stmt = $pdo->prepare("INSERT INTO team (tenant_id, nama, jabatan, bio, foto) VALUES (?, ?, ?, ?, ?)");
+    if ($stmt->execute([$tenant_id, $nama, $jabatan, $deskripsi, $foto_path])) {
         $_SESSION['flash_message'] = "Anggota tim berhasil ditambahkan!";
     } else {
         $_SESSION['flash_error'] = "Gagal menambahkan anggota tim.";
@@ -60,10 +52,10 @@ if ($action === 'edit_process' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $deskripsi = trim($_POST['deskripsi']);
     
     // Check old photo
-    $stmt_old = $pdo->prepare("SELECT foto FROM company_teams WHERE id = ?");
-    $stmt_old->execute([$id]);
+    $stmt_old = $pdo->prepare("SELECT foto FROM team WHERE id = ? AND tenant_id = ?");
+    $stmt_old->execute([$id, $tenant_id]);
     $old_data = $stmt_old->fetch();
-    $foto_path = $old_data['foto'];
+    $foto_path = $old_data['foto'] ?? '';
 
     if (isset($_FILES['foto']) && $_FILES['foto']['error'] == 0) {
         $allowed = ['jpg', 'jpeg', 'png', 'webp'];
@@ -71,18 +63,22 @@ if ($action === 'edit_process' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         if (in_array($ext, $allowed)) {
             $filename = uniqid('team_') . '.' . $ext;
             $destination = '../uploads/team/' . $filename;
-            if (move_uploaded_file($_FILES['foto']['tmp_name'], $destination)) {
+            // Create uploads directory if not exist
+            if (!is_dir('../uploads/team/')) {
+                @mkdir('../uploads/team/', 0755, true);
+            }
+            if (@move_uploaded_file($_FILES['foto']['tmp_name'], $destination)) {
                 // Delete old file if exists
                 if (!empty($foto_path) && file_exists('../' . $foto_path)) {
-                    unlink('../' . $foto_path);
+                    @unlink('../' . $foto_path);
                 }
                 $foto_path = 'uploads/team/' . $filename;
             }
         }
     }
 
-    $stmt = $pdo->prepare("UPDATE company_teams SET nama=?, jabatan=?, deskripsi=?, foto=? WHERE id=?");
-    if ($stmt->execute([$nama, $jabatan, $deskripsi, $foto_path, $id])) {
+    $stmt = $pdo->prepare("UPDATE team SET nama=?, jabatan=?, bio=?, foto=? WHERE id=? AND tenant_id=?");
+    if ($stmt->execute([$nama, $jabatan, $deskripsi, $foto_path, $id, $tenant_id])) {
         $_SESSION['flash_message'] = "Data anggota berhasil diupdate!";
     } else {
         $_SESSION['flash_error'] = "Gagal mengupdate data anggota.";
@@ -93,23 +89,24 @@ if ($action === 'edit_process' && $_SERVER['REQUEST_METHOD'] === 'POST') {
 
 // Handle Delete
 if ($action === 'delete' && isset($_GET['id'])) {
-    $stmt_old = $pdo->prepare("SELECT foto FROM company_teams WHERE id = ?");
-    $stmt_old->execute([$_GET['id']]);
+    $stmt_old = $pdo->prepare("SELECT foto FROM team WHERE id = ? AND tenant_id = ?");
+    $stmt_old->execute([$_GET['id'], $tenant_id]);
     $old_data = $stmt_old->fetch();
     
     if (!empty($old_data['foto']) && file_exists('../' . $old_data['foto'])) {
-        unlink('../' . $old_data['foto']);
+        @unlink('../' . $old_data['foto']);
     }
 
-    $stmt = $pdo->prepare("DELETE FROM company_teams WHERE id = ?");
-    $stmt->execute([$_GET['id']]);
+    $stmt = $pdo->prepare("DELETE FROM team WHERE id = ? AND tenant_id = ?");
+    $stmt->execute([$_GET['id'], $tenant_id]);
     $_SESSION['flash_message'] = "Anggota tim berhasil dihapus!";
     header("Location: team.php");
     exit;
 }
 
 // Fetch team members
-$stmt_team = $pdo->query("SELECT * FROM company_teams ORDER BY id DESC");
+$stmt_team = $pdo->prepare("SELECT *, bio AS deskripsi FROM team WHERE tenant_id = ? ORDER BY urutan ASC, id DESC");
+$stmt_team->execute([$tenant_id]);
 $company_teams = $stmt_team->fetchAll();
 ?>
 <!DOCTYPE html>
@@ -144,8 +141,8 @@ $company_teams = $stmt_team->fetchAll();
                     $is_edit = $action === 'edit';
                     $edit_member = null;
                     if ($is_edit && isset($_GET['id'])) {
-                        $stmt = $pdo->prepare("SELECT * FROM company_teams WHERE id = ?");
-                        $stmt->execute([$_GET['id']]);
+                        $stmt = $pdo->prepare("SELECT *, bio AS deskripsi FROM team WHERE id = ? AND tenant_id = ?");
+                        $stmt->execute([$_GET['id'], $tenant_id]);
                         $edit_member = $stmt->fetch();
                     }
                 ?>

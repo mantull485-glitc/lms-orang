@@ -7,7 +7,8 @@ $brand = getTenantBranding($pdo);
 $nama  = $brand['nama_lembaga'];
 $logo  = $brand['logo'];
 
-$stmt = $pdo->query("SELECT * FROM company_teams ORDER BY id ASC");
+$stmt = $pdo->prepare("SELECT *, bio AS deskripsi FROM team WHERE tenant_id = ? ORDER BY urutan ASC, id ASC");
+$stmt->execute([$GLOBALS['tenant_id'] ?? 0]);
 $teams = $stmt->fetchAll();
 ?>
 <!DOCTYPE html>

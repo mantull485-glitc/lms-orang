@@ -2,15 +2,20 @@
 session_start();
 require_once '../config/tenant_guard.php';
 require_once '../config/database.php';
+require_once '../config/tenant_settings.php';
 
 if (!isset($_GET['id']) || empty($_GET['id'])) {
     header("Location: index.php");
     exit;
 }
 
+$brand = getTenantBranding($pdo);
+$nama = $brand['nama_lembaga'];
+$tenant_id = $GLOBALS['tenant_id'] ?? 0;
+
 $class_id = $_GET['id'];
-$stmt = $pdo->prepare("SELECT * FROM classes WHERE id = ?");
-$stmt->execute([$class_id]);
+$stmt = $pdo->prepare("SELECT * FROM classes WHERE id = ? AND tenant_id = ?");
+$stmt->execute([$class_id, $tenant_id]);
 $class = $stmt->fetch();
 
 if (!$class) {
@@ -22,8 +27,8 @@ if (!$class) {
 $is_registered = false;
 $registration_status = '';
 if (isset($_SESSION['user_id'])) {
-    $stmt_check = $pdo->prepare("SELECT * FROM registrations WHERE user_id = ? AND class_id = ?");
-    $stmt_check->execute([$_SESSION['user_id'], $class_id]);
+    $stmt_check = $pdo->prepare("SELECT * FROM registrations WHERE user_id = ? AND class_id = ? AND tenant_id = ?");
+    $stmt_check->execute([$_SESSION['user_id'], $class_id, $tenant_id]);
     $reg = $stmt_check->fetch();
     if ($reg) {
         $is_registered = true;
@@ -36,10 +41,11 @@ if (isset($_SESSION['user_id'])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= htmlspecialchars($class['nama_kelas']); ?> - LPK Lunarica</title>
+    <title><?= htmlspecialchars($class['nama_kelas']); ?> - <?= htmlspecialchars($nama); ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="../assets/css/style.css?v=<?= time(); ?>">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <?php outputBrandingCSS($brand); ?>
     <style>
         body { padding-top: 80px; }
     </style>
@@ -55,7 +61,14 @@ if (isset($_SESSION['user_id'])) {
 <!-- Navbar -->
 <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
     <div class="container">
-        <a class="navbar-brand fw-bold" href="../index.php">LPK Lunarica</a>
+        <a class="navbar-brand fw-bold d-flex align-items-center gap-2" href="../index.php">
+            <?php if (!empty($brand['logo']) && file_exists(dirname(__DIR__).'/assets/img/'.$brand['logo'])): ?>
+            <img src="../assets/img/<?= htmlspecialchars($brand['logo']) ?>" style="height:36px;width:auto;object-fit:contain" alt="<?= htmlspecialchars($nama) ?>">
+            <?php else: ?>
+            <div class="bg-primary rounded-2 d-flex align-items-center justify-content-center" style="width:32px;height:32px"><i class="fas fa-graduation-cap text-white"></i></div>
+            <span class="text-primary"><?= htmlspecialchars($nama) ?></span>
+            <?php endif; ?>
+        </a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-toggle="target" aria-controls="navbarNav">
             <span class="navbar-toggler-icon"></span>
         </button>

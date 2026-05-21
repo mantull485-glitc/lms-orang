@@ -3,22 +3,22 @@ require_once 'auth_guard.php';
 
 // ── Revenue per bulan (12 bulan terakhir)
 $revenue_monthly = $pdo_global->query("
-    SELECT DATE_FORMAT(created_at, '%Y-%m') as bulan,
+    SELECT TO_CHAR(created_at, 'YYYY-MM') as bulan,
            COUNT(*) as total_order,
            SUM(harga_bayar) as revenue
     FROM orders
     WHERE status = 'diterima'
-      AND created_at >= DATE_SUB(NOW(), INTERVAL 12 MONTH)
-    GROUP BY DATE_FORMAT(created_at, '%Y-%m')
+      AND created_at >= NOW() - INTERVAL '12 months'
+    GROUP BY TO_CHAR(created_at, 'YYYY-MM')
     ORDER BY bulan ASC
 ")->fetchAll();
 
 // ── Tenant baru per bulan
 $tenant_monthly = $pdo_global->query("
-    SELECT DATE_FORMAT(created_at, '%Y-%m') as bulan, COUNT(*) as total
+    SELECT TO_CHAR(created_at, 'YYYY-MM') as bulan, COUNT(*) as total
     FROM tenants
-    WHERE created_at >= DATE_SUB(NOW(), INTERVAL 12 MONTH)
-    GROUP BY DATE_FORMAT(created_at, '%Y-%m')
+    WHERE created_at >= NOW() - INTERVAL '12 months'
+    GROUP BY TO_CHAR(created_at, 'YYYY-MM')
     ORDER BY bulan ASC
 ")->fetchAll();
 
@@ -34,11 +34,11 @@ $revenue_by_pkg = $pdo_global->query("
 // ── Summary stats
 $stats = [
     'total_revenue'   => $pdo_global->query("SELECT COALESCE(SUM(harga_bayar),0) FROM orders WHERE status='diterima'")->fetchColumn(),
-    'revenue_bulan'   => $pdo_global->query("SELECT COALESCE(SUM(harga_bayar),0) FROM orders WHERE status='diterima' AND MONTH(created_at)=MONTH(NOW()) AND YEAR(created_at)=YEAR(NOW())")->fetchColumn(),
+    'revenue_bulan'   => $pdo_global->query("SELECT COALESCE(SUM(harga_bayar),0) FROM orders WHERE status='diterima' AND EXTRACT(MONTH FROM created_at)=EXTRACT(MONTH FROM NOW()) AND EXTRACT(YEAR FROM created_at)=EXTRACT(YEAR FROM NOW())")->fetchColumn(),
     'total_tenant'    => $pdo_global->query("SELECT COUNT(*) FROM tenants")->fetchColumn(),
     'aktif_tenant'    => $pdo_global->query("SELECT COUNT(*) FROM tenants WHERE status='aktif'")->fetchColumn(),
     'total_order'     => $pdo_global->query("SELECT COUNT(*) FROM orders WHERE status='diterima'")->fetchColumn(),
-    'order_bulan'     => $pdo_global->query("SELECT COUNT(*) FROM orders WHERE status='diterima' AND MONTH(created_at)=MONTH(NOW()) AND YEAR(created_at)=YEAR(NOW())")->fetchColumn(),
+    'order_bulan'     => $pdo_global->query("SELECT COUNT(*) FROM orders WHERE status='diterima' AND EXTRACT(MONTH FROM created_at)=EXTRACT(MONTH FROM NOW()) AND EXTRACT(YEAR FROM created_at)=EXTRACT(YEAR FROM NOW())")->fetchColumn(),
     'pending_order'   => $pdo_global->query("SELECT COUNT(*) FROM orders WHERE status='pending'")->fetchColumn(),
     'nonaktif_tenant' => $pdo_global->query("SELECT COUNT(*) FROM tenants WHERE status='nonaktif'")->fetchColumn(),
 ];

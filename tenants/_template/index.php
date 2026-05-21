@@ -11,7 +11,8 @@ $tagline = $brand['tagline'];
 $logo  = $brand['logo'];
 
 // Fetch some recent classes to display on the landing page
-$stmt = $pdo->query("SELECT * FROM classes ORDER BY id DESC LIMIT 3");
+$stmt = $pdo->prepare("SELECT * FROM classes WHERE tenant_id = ? ORDER BY id DESC LIMIT 3");
+$stmt->execute([$GLOBALS['tenant_id'] ?? 0]);
 $recent_classes = $stmt->fetchAll();
 ?>
 <!DOCTYPE html>
