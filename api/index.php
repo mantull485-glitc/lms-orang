@@ -82,6 +82,14 @@ if (file_exists($realPath) && is_file($realPath)) {
         exit;
     }
 } else {
+    // Jika direktori, coba cari index.php di dalamnya
+    $indexPath = rtrim($realPath, '/') . '/index.php';
+    if (is_dir($realPath) && file_exists($indexPath)) {
+        $_SERVER['SCRIPT_NAME'] = rtrim($targetFile, '/') . '/index.php';
+        $_SERVER['PHP_SELF']    = rtrim($targetFile, '/') . '/index.php';
+        require $indexPath;
+        exit;
+    }
     // Jika file tidak ditemukan, tampilkan 404
     http_response_code(404);
     echo "404 Not Found: " . htmlspecialchars($path);
