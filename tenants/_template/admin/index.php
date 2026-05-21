@@ -2,6 +2,7 @@
 session_start();
 require_once '../config/tenant_guard.php';
 require_once '../config/database.php';
+$tenant_id = $GLOBALS['tenant_id'] ?? 0;
 
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
     header("Location: ../auth/login.php");
@@ -9,20 +10,25 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
 }
 
 // Get statistics
+$st_users = $pdo->prepare("SELECT COUNT(*) FROM users WHERE role = 'user' AND tenant_id = ?"); $st_users->execute([$tenant_id]);
+$st_cls   = $pdo->prepare("SELECT COUNT(*) FROM classes WHERE tenant_id = ?"); $st_cls->execute([$tenant_id]);
+$st_pend  = $pdo->prepare("SELECT COUNT(*) FROM registrations WHERE status = 'pending' AND tenant_id = ?"); $st_pend->execute([$tenant_id]);
 $stats = [
-    'users' => $pdo->query("SELECT COUNT(*) FROM users WHERE role = 'user'")->fetchColumn(),
-    'classes' => $pdo->query("SELECT COUNT(*) FROM classes")->fetchColumn(),
-    'pending_regs' => $pdo->query("SELECT COUNT(*) FROM registrations WHERE status = 'pending'")->fetchColumn()
+    'users'       => $st_users->fetchColumn(),
+    'classes'     => $st_cls->fetchColumn(),
+    'pending_regs'=> $st_pend->fetchColumn(),
 ];
 
 // Get recent registrations
-$stmt_recent = $pdo->query("
+$stmt_recent = $pdo->prepare("
     SELECT r.*, u.nama, c.nama_kelas, c.kategori 
     FROM registrations r 
     JOIN users u ON r.user_id = u.id 
     JOIN classes c ON r.class_id = c.id 
+    WHERE r.tenant_id = ?
     ORDER BY r.tanggal_daftar DESC LIMIT 5
 ");
+$stmt_recent->execute([$tenant_id]);
 $recent_regs = $stmt_recent->fetchAll();
 ?>
 <!DOCTYPE html>

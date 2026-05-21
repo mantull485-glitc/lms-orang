@@ -2,6 +2,7 @@
 session_start();
 require_once '../config/tenant_guard.php';
 require_once '../config/database.php';
+$tenant_id = $GLOBALS['tenant_id'] ?? 0;
 
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
     header("Location: ../auth/login.php");
@@ -15,17 +16,17 @@ if ($action === 'delete' && isset($_GET['id'])) {
     $id = intval($_GET['id']);
     
     try {
-        $stmt_info = $pdo->prepare("SELECT bukti_bayar, user_id, class_id FROM registrations WHERE id = ?");
-        $stmt_info->execute([$id]);
+        $stmt_info = $pdo->prepare("SELECT bukti_bayar, user_id, class_id FROM registrations WHERE id = ? AND tenant_id = ?");
+        $stmt_info->execute([$id, $tenant_id]);
         $reg_info = $stmt_info->fetch();
 
         if ($reg_info) {
             // Delete certificate first
-            $pdo->prepare("DELETE FROM certificates WHERE user_id = ? AND class_id = ?")->execute([$reg_info['user_id'], $reg_info['class_id']]);
+            $pdo->prepare("DELETE FROM certificates WHERE user_id = ? AND class_id = ? AND tenant_id = ?")->execute([$reg_info['user_id'], $reg_info['class_id'], $tenant_id]);
             
             // Delete registration
-            $stmt_del = $pdo->prepare("DELETE FROM registrations WHERE id = ?");
-            $stmt_del->execute([$id]);
+            $stmt_del = $pdo->prepare("DELETE FROM registrations WHERE id = ? AND tenant_id = ?");
+            $stmt_del->execute([$id, $tenant_id]);
 
             if ($stmt_del->rowCount() > 0) {
                 if (!empty($reg_info['bukti_bayar']) && file_exists('../' . $reg_info['bukti_bayar'])) {
@@ -52,22 +53,22 @@ if ($action === 'add_process' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $class_id = intval($_POST['class_id']);
 
     // Fetch class price to record harga_saat_daftar
-    $stmt_cls = $pdo->prepare("SELECT harga, harga_spesial FROM classes WHERE id = ?");
-    $stmt_cls->execute([$class_id]);
+    $stmt_cls = $pdo->prepare("SELECT harga, harga_spesial FROM classes WHERE id = ? AND tenant_id = ?");
+    $stmt_cls->execute([$class_id, $tenant_id]);
     $cls = $stmt_cls->fetch();
     $harga = $cls ? (($cls['harga_spesial'] !== null) ? $cls['harga_spesial'] : $cls['harga']) : 0;
 
-    $stmt_check = $pdo->prepare("SELECT id FROM registrations WHERE user_id = ? AND class_id = ?");
-    $stmt_check->execute([$user_id, $class_id]);
+    $stmt_check = $pdo->prepare("SELECT id FROM registrations WHERE user_id = ? AND class_id = ? AND tenant_id = ?");
+    $stmt_check->execute([$user_id, $class_id, $tenant_id]);
     
     if ($stmt_check->fetch()) {
         $_SESSION['flash_error'] = "Peserta sudah terdaftar di kelas ini!";
     } else {
         $stmt = $pdo->prepare("
-            INSERT INTO registrations (user_id, class_id, status, harga_saat_daftar, metode_pembayaran, tanggal_konfirmasi)
-            VALUES (?, ?, 'diterima', ?, 'manual_admin', NOW())
+            INSERT INTO registrations (tenant_id, user_id, class_id, status, harga_saat_daftar, metode_pembayaran, tanggal_konfirmasi)
+            VALUES (?, ?, ?, 'diterima', ?, 'manual_admin', NOW())
         ");
-        if ($stmt->execute([$user_id, $class_id, $harga])) {
+        if ($stmt->execute([$tenant_id, $user_id, $class_id, $harga])) {
             $_SESSION['flash_message'] = "Berhasil! Peserta telah ditambahkan ke kelas tersebut.";
         } else {
             $_SESSION['flash_error'] = "Gagal mendaftarkan peserta.";
@@ -84,12 +85,11 @@ if ($action === 'update_status' && isset($_GET['id']) && isset($_GET['status']))
     
     if (in_array($status, ['pending', 'diterima', 'ditolak', 'selesai'])) {
         if ($status === 'diterima') {
-            // Stamp confirmation timestamp when approving
-            $stmt = $pdo->prepare("UPDATE registrations SET status = ?, tanggal_konfirmasi = NOW() WHERE id = ?");
+            $stmt = $pdo->prepare("UPDATE registrations SET status = ?, tanggal_konfirmasi = NOW() WHERE id = ? AND tenant_id = ?");
         } else {
-            $stmt = $pdo->prepare("UPDATE registrations SET status = ? WHERE id = ?");
+            $stmt = $pdo->prepare("UPDATE registrations SET status = ? WHERE id = ? AND tenant_id = ?");
         }
-        $stmt->execute([$status, $id]);
+        $stmt->execute([$status, $id, $tenant_id]);
         $_SESSION['flash_message'] = "Status pendaftaran berhasil diubah menjadi " . ucfirst($status) . "!";
     }
     
@@ -98,13 +98,15 @@ if ($action === 'update_status' && isset($_GET['id']) && isset($_GET['status']))
 }
 
 // Fetch Registrations
-$stmt_regs = $pdo->query("
+$stmt_regs = $pdo->prepare("
     SELECT r.*, u.nama, u.email, u.no_hp, c.nama_kelas, c.jadwal, c.kategori 
     FROM registrations r 
     JOIN users u ON r.user_id = u.id 
     JOIN classes c ON r.class_id = c.id 
+    WHERE r.tenant_id = ?
     ORDER BY r.tanggal_daftar DESC
 ");
+$stmt_regs->execute([$tenant_id]);
 $registrations = $stmt_regs->fetchAll();
 ?>
 <!DOCTYPE html>
@@ -130,11 +132,13 @@ $registrations = $stmt_regs->fetchAll();
             <?php if ($action === 'add'): ?>
                 <?php
                     // Fetch users for dropdown
-                    $stmt_all_users = $pdo->query("SELECT id, nama, email FROM users WHERE role = 'user' ORDER BY nama ASC");
+                    $stmt_all_users = $pdo->prepare("SELECT id, nama, email FROM users WHERE role = 'user' AND tenant_id = ? ORDER BY nama ASC");
+                    $stmt_all_users->execute([$tenant_id]);
                     $all_users = $stmt_all_users->fetchAll();
                     
                     // Fetch classes for dropdown
-                    $stmt_all_classes = $pdo->query("SELECT id, nama_kelas, jadwal FROM classes ORDER BY jadwal ASC");
+                    $stmt_all_classes = $pdo->prepare("SELECT id, nama_kelas, jadwal FROM classes WHERE tenant_id = ? ORDER BY jadwal ASC");
+                    $stmt_all_classes->execute([$tenant_id]);
                     $all_classes = $stmt_all_classes->fetchAll();
                 ?>
                 <!-- Header Add -->

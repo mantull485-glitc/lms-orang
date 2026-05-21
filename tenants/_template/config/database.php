@@ -1,5 +1,9 @@
 <?php
-// Konfigurasi Database Tenant - Dynamic Loader (Vercel-compatible)
+// ============================================================
+// TENANT DATABASE — Supabase Single-Database Mode
+// Koneksi ke Supabase dan deteksi tenant_id dari URL
+// ============================================================
+
 if (!function_exists('findPlatformRoot')) {
     function findPlatformRoot(): string {
         return dirname(dirname(dirname(__DIR__)));
@@ -9,52 +13,40 @@ if (!function_exists('findPlatformRoot')) {
 $platform_root = findPlatformRoot();
 require_once $platform_root . '/config/superadmin_db.php';
 
-// Detect subdomain from URL path
+// Gunakan koneksi global (Supabase) sebagai $pdo untuk tenant
+$pdo = $pdo_global;
+
+// Detect subdomain dari URL path
 $request_uri = $_SERVER['REQUEST_URI'] ?? '';
 $subdomain = '';
 if (preg_match('/\/tenants\/([a-zA-Z0-9_-]+)/', $request_uri, $matches)) {
     $subdomain = $matches[1];
 }
 
-if ($subdomain === '_template' || empty($subdomain)) {
-    // Development fallback or direct template access
-    $dbname = 'lunarica_db'; 
-} else {
-    // Load database name from global database
+// Fallback: coba baca dari status_check.php
+if (empty($subdomain) || $subdomain === '_template') {
+    $status_config = __DIR__ . '/status_check.php';
+    if (file_exists($status_config)) {
+        require_once $status_config;
+        $subdomain = defined('TENANT_SUBDOMAIN') ? TENANT_SUBDOMAIN : '';
+    }
+}
+
+// Ambil tenant_id dari database berdasarkan subdomain
+$tenant_id = 0;
+if (!empty($subdomain) && $subdomain !== '_template') {
     try {
-        $stmt_t = $pdo_global->prepare("SELECT db_name FROM tenants WHERE subdomain = ?");
-        $stmt_t->execute([$subdomain]);
-        $t_rec = $stmt_t->fetch(PDO::FETCH_ASSOC);
-        $dbname = $t_rec ? $t_rec['db_name'] : '';
-    } catch (Exception $e) {
-        $dbname = '';
-    }
-}
-
-if (empty($dbname)) {
-    die("Error: Tenant database not found for subdomain '" . htmlspecialchars($subdomain) . "'.");
-}
-
-$host = SA_DB_HOST;
-$user = SA_DB_USER;
-$pass = SA_DB_PASS;
-
-try {
-    $pdo = new PDO("mysql:host=$host;dbname=$dbname", $user, $pass);
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-    $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
-} catch (PDOException $e) {
-    if ($e->getCode() == 1049) { // 1049 is Unknown database
-        try {
-            $pdo_temp = new PDO("mysql:host=$host", $user, $pass);
-            $pdo_temp->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-            $pdo_temp->exec("CREATE DATABASE IF NOT EXISTS `$dbname`");
-            header("Location: init_db.php");
-            exit;
-        } catch (PDOException $e2) {
-            die("Critical Database Error: " . $e2->getMessage());
+        $stmt_tid = $pdo_global->prepare("SELECT id FROM tenants WHERE subdomain = ? AND status = 'aktif'");
+        $stmt_tid->execute([$subdomain]);
+        $row_tid = $stmt_tid->fetch();
+        if ($row_tid) {
+            $tenant_id = (int)$row_tid['id'];
         }
+    } catch (Exception $e) {
+        $tenant_id = 0;
     }
-    die("Database Connection failed. Error: " . $e->getMessage());
 }
-?>
+
+// Expose globally
+$GLOBALS['tenant_id']  = $tenant_id;
+$GLOBALS['subdomain']  = $subdomain;

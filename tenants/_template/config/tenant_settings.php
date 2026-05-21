@@ -1,39 +1,45 @@
 <?php
 // ============================================================
-// TENANT SETTINGS HELPER — Include di semua halaman publik
+// TENANT SETTINGS HELPER — Supabase multi-tenant compatible
 // Memuat nama lembaga, logo, dan warna dari database
+// Menggunakan tenant_id dari GLOBALS untuk isolasi per tenant
 // ============================================================
 
 if (!function_exists('getSetting')) {
-    function getSetting(PDO $pdo, string $key, string $default = ''): string {
+    function getSetting(PDO $pdo, string $key, string $default = '', int $tid = 0): string {
         static $cache = [];
-        if (isset($cache[$key])) return $cache[$key];
-        $s = $pdo->prepare("SELECT setting_value FROM settings WHERE setting_key=?");
-        $s->execute([$key]);
+        $cacheKey = $tid . ':' . $key;
+        if (isset($cache[$cacheKey])) return $cache[$cacheKey];
+        if ($tid === 0) $tid = (int)($GLOBALS['tenant_id'] ?? 0);
+        $s = $pdo->prepare("SELECT setting_value FROM settings WHERE setting_key=? AND tenant_id=?");
+        $s->execute([$key, $tid]);
         $r = $s->fetchColumn();
-        $cache[$key] = $r !== false ? $r : $default;
-        return $cache[$key];
+        $cache[$cacheKey] = $r !== false ? $r : $default;
+        return $cache[$cacheKey];
     }
 }
 
-function getAllSettings(PDO $pdo): array {
-    $rows = $pdo->query("SELECT setting_key, setting_value FROM settings")->fetchAll(PDO::FETCH_KEY_PAIR);
-    return $rows;
+function getAllSettings(PDO $pdo, int $tid = 0): array {
+    if ($tid === 0) $tid = (int)($GLOBALS['tenant_id'] ?? 0);
+    $s = $pdo->prepare("SELECT setting_key, setting_value FROM settings WHERE tenant_id=?");
+    $s->execute([$tid]);
+    return $s->fetchAll(PDO::FETCH_KEY_PAIR);
 }
 
-function getTenantBranding(PDO $pdo): array {
+function getTenantBranding(PDO $pdo, int $tid = 0): array {
+    if ($tid === 0) $tid = (int)($GLOBALS['tenant_id'] ?? 0);
     return [
-        'nama_lembaga'   => getSetting($pdo, 'nama_lembaga', 'Platform LPK'),
-        'tagline'        => getSetting($pdo, 'tagline', 'Platform Pelatihan Profesional'),
-        'alamat'         => getSetting($pdo, 'alamat', ''),
-        'no_telp'        => getSetting($pdo, 'no_telp', ''),
-        'email_lembaga'  => getSetting($pdo, 'email_lembaga', ''),
-        'website'        => getSetting($pdo, 'website', ''),
-        'logo'           => getSetting($pdo, 'logo', ''),
-        'color_primary'  => getSetting($pdo, 'color_primary', '#FF6A00'),
-        'color_secondary'=> getSetting($pdo, 'color_secondary', '#00D2FF'),
-        'color_navy'     => getSetting($pdo, 'color_navy', '#0F172A'),
-        'color_navy_light'=> getSetting($pdo, 'color_navy_light', '#1E293B'),
+        'nama_lembaga'   => getSetting($pdo, 'nama_lembaga',    'Platform LPK', $tid),
+        'tagline'        => getSetting($pdo, 'tagline',          'Platform Pelatihan Profesional', $tid),
+        'alamat'         => getSetting($pdo, 'alamat',           '', $tid),
+        'no_telp'        => getSetting($pdo, 'no_telp',          '', $tid),
+        'email_lembaga'  => getSetting($pdo, 'email_lembaga',    '', $tid),
+        'website'        => getSetting($pdo, 'website',          '', $tid),
+        'logo'           => getSetting($pdo, 'logo',             '', $tid),
+        'color_primary'  => getSetting($pdo, 'color_primary',    '#FF6A00', $tid),
+        'color_secondary'=> getSetting($pdo, 'color_secondary',  '#00D2FF', $tid),
+        'color_navy'     => getSetting($pdo, 'color_navy',       '#0F172A', $tid),
+        'color_navy_light'=> getSetting($pdo, 'color_navy_light','#1E293B', $tid),
     ];
 }
 

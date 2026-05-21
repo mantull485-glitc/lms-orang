@@ -2,6 +2,7 @@
 session_start();
 require_once '../config/tenant_guard.php';
 require_once '../config/database.php';
+$tenant_id = $GLOBALS['tenant_id'] ?? 0;
 
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
     header("Location: ../auth/login.php");
@@ -19,14 +20,14 @@ if ($action === 'add_process' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $role = $_POST['role'] ?? 'user';
 
     // Validation
-    $stmt_check = $pdo->prepare("SELECT id FROM users WHERE email = ?");
-    $stmt_check->execute([$email]);
+    $stmt_check = $pdo->prepare("SELECT id FROM users WHERE tenant_id = ? AND email = ?");
+    $stmt_check->execute([$tenant_id, $email]);
     if ($stmt_check->fetch()) {
         $_SESSION['flash_error'] = "Email sudah terdaftar!";
     } else {
         $hashed_password = password_hash($password, PASSWORD_BCRYPT);
-        $stmt = $pdo->prepare("INSERT INTO users (nama, email, no_hp, password, role) VALUES (?, ?, ?, ?, ?)");
-        if ($stmt->execute([$nama, $email, $no_hp, $hashed_password, $role])) {
+        $stmt = $pdo->prepare("INSERT INTO users (tenant_id, nama, email, no_hp, password, role) VALUES (?, ?, ?, ?, ?, ?)");
+        if ($stmt->execute([$tenant_id, $nama, $email, $no_hp, $hashed_password, $role])) {
             $_SESSION['flash_message'] = "Berhasil! Pengguna baru telah ditambahkan.";
         } else {
             $_SESSION['flash_error'] = "Gagal menambahkan pengguna baru.";
@@ -41,8 +42,8 @@ if ($action === 'delete' && isset($_GET['id'])) {
     $id = intval($_GET['id']);
     // Prevent self-deletion
     if ($id != $_SESSION['user_id']) {
-        $stmt_del = $pdo->prepare("DELETE FROM users WHERE id = ?");
-        if ($stmt_del->execute([$id])) {
+        $stmt_del = $pdo->prepare("DELETE FROM users WHERE id = ? AND tenant_id = ?");
+        if ($stmt_del->execute([$id, $tenant_id])) {
             $_SESSION['flash_message'] = "Pengguna berhasil dihapus secara permanen.";
         } else {
             $_SESSION['flash_error'] = "Gagal menghapus pengguna.";
@@ -55,7 +56,8 @@ if ($action === 'delete' && isset($_GET['id'])) {
 }
 
 // Fetch all users
-$stmt_users = $pdo->query("SELECT * FROM users ORDER BY created_at DESC");
+$stmt_users = $pdo->prepare("SELECT * FROM users WHERE tenant_id = ? ORDER BY created_at DESC");
+$stmt_users->execute([$tenant_id]);
 $users = $stmt_users->fetchAll();
 
 // Generate user initials for avatar

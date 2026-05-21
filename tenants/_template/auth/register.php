@@ -2,6 +2,7 @@
 session_start();
 require_once '../config/tenant_guard.php';
 require_once '../config/database.php';
+$tenant_id = $GLOBALS['tenant_id'] ?? 0;
 
 if (isset($_SESSION['user_id'])) {
     if ($_SESSION['role'] === 'admin') {
@@ -33,16 +34,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $error = 'Password minimal 6 karakter!';
     } else {
         // Check if email already exists
-        $stmt_check = $pdo->prepare("SELECT id FROM users WHERE email = ?");
-        $stmt_check->execute([$email]);
+        $stmt_check = $pdo->prepare("SELECT id FROM users WHERE email = ? AND tenant_id = ?");
+        $stmt_check->execute([$email, $tenant_id]);
         if ($stmt_check->fetch()) {
             $error = 'Email sudah terdaftar!';
         } else {
             // Hash password and insert
             $hashed_password = password_hash($password, PASSWORD_BCRYPT);
             try {
-                $stmt = $pdo->prepare("INSERT INTO users (nama, email, no_hp, password, role) VALUES (?, ?, ?, ?, 'user')");
-                $stmt->execute([$nama, $email, $no_hp, $hashed_password]);
+                $stmt = $pdo->prepare("INSERT INTO users (tenant_id, nama, email, no_hp, password, role) VALUES (?, ?, ?, ?, ?, 'user')");
+                $stmt->execute([$tenant_id, $nama, $email, $no_hp, $hashed_password]);
                 $_SESSION['flash_message'] = 'Pendaftaran berhasil! Silakan login.';
                 header("Location: login.php");
                 exit;

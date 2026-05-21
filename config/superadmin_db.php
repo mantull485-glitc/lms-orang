@@ -1,17 +1,17 @@
 <?php
 // ============================================================
-// KONFIGURASI DATABASE GLOBAL (Super Admin)
-// Edit sesuai kredensial server Anda
+// KONFIGURASI DATABASE GLOBAL — Supabase PostgreSQL
 // ============================================================
 
-define('SA_DB_HOST', 'localhost');
-define('SA_DB_NAME', 'platform_sales_db');
-define('SA_DB_USER', 'root');
-define('SA_DB_PASS', '');
+define('SA_DB_HOST', 'db.tvpgimvjfydligohxwbg.supabase.co');
+define('SA_DB_NAME', 'postgres');
+define('SA_DB_USER', 'postgres');
+define('SA_DB_PASS', 'ARMAN.MANUSIA');
+define('SA_DB_PORT', '5432');
 
 try {
     $pdo_global = new PDO(
-        'mysql:host=' . SA_DB_HOST . ';dbname=' . SA_DB_NAME . ';charset=utf8mb4',
+        'pgsql:host=' . SA_DB_HOST . ';port=' . SA_DB_PORT . ';dbname=' . SA_DB_NAME . ';sslmode=require',
         SA_DB_USER,
         SA_DB_PASS,
         [

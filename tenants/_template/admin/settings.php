@@ -3,6 +3,7 @@ session_start();
 require_once '../config/tenant_guard.php';
 require_once '../config/database.php';
 require_once '../config/tenant_settings.php';
+$tenant_id = $GLOBALS['tenant_id'] ?? 0;
 
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
     header("Location: ../auth/login.php"); exit;
@@ -12,9 +13,9 @@ $flash = $_SESSION['flash_settings'] ?? null;
 unset($_SESSION['flash_settings']);
 
 // Load settings
-function getSetting(PDO $pdo, string $key, string $default = ''): string {
-    $s = $pdo->prepare("SELECT setting_value FROM settings WHERE setting_key=?");
-    $s->execute([$key]);
+function getSetting(PDO $pdo, string $key, string $default = '', int $tid = 0): string {
+    $s = $pdo->prepare("SELECT setting_value FROM settings WHERE setting_key=? AND tenant_id=?");
+    $s->execute([$key, $tid]);
     $r = $s->fetchColumn();
     return $r !== false ? $r : $default;
 }
@@ -26,17 +27,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $fields = ['nama_lembaga','tagline','alamat','no_telp','email_lembaga','website'];
         foreach ($fields as $f) {
             $val = trim($_POST[$f] ?? '');
-            $pdo->prepare("INSERT INTO settings (setting_key, setting_value) VALUES (?,?) ON DUPLICATE KEY UPDATE setting_value=?")
-                ->execute([$f, $val, $val]);
+            $pdo->prepare("INSERT INTO settings (tenant_id, setting_key, setting_value) VALUES (?,?,?)
+                           ON CONFLICT (tenant_id, setting_key) DO UPDATE SET setting_value=EXCLUDED.setting_value")
+                ->execute([$tenant_id, $f, $val]);
         }
         // Handle logo upload
         if (isset($_FILES['logo']) && $_FILES['logo']['error'] === UPLOAD_ERR_OK) {
             $ext = strtolower(pathinfo($_FILES['logo']['name'], PATHINFO_EXTENSION));
             if (in_array($ext, ['jpg','jpeg','png','webp','svg'])) {
                 $upload_dir = __DIR__ . '/../assets/img/';
-                if (!is_dir($upload_dir)) mkdir($upload_dir, 0755, true);
-                move_uploaded_file($_FILES['logo']['tmp_name'], $upload_dir . 'logo.' . $ext);
-                $pdo->prepare("INSERT INTO settings (setting_key, setting_value) VALUES ('logo','logo.$ext') ON DUPLICATE KEY UPDATE setting_value='logo.$ext'")->execute();
+                if (!is_dir($upload_dir)) @mkdir($upload_dir, 0755, true);
+                @move_uploaded_file($_FILES['logo']['tmp_name'], $upload_dir . 'logo.' . $ext);
+                $pdo->prepare("INSERT INTO settings (tenant_id, setting_key, setting_value) VALUES (?,?,?)
+                               ON CONFLICT (tenant_id, setting_key) DO UPDATE SET setting_value=EXCLUDED.setting_value")
+                    ->execute([$tenant_id, 'logo', 'logo.'.$ext]);
             }
         }
         $_SESSION['flash_settings'] = ['type'=>'success','msg'=>'Informasi lembaga berhasil disimpan.'];
@@ -46,8 +50,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $fields = ['nama_bank','no_rekening','nama_rekening','instruksi_bayar'];
         foreach ($fields as $f) {
             $val = trim($_POST[$f] ?? '');
-            $pdo->prepare("INSERT INTO settings (setting_key, setting_value) VALUES (?,?) ON DUPLICATE KEY UPDATE setting_value=?")
-                ->execute([$f, $val, $val]);
+            $pdo->prepare("INSERT INTO settings (tenant_id, setting_key, setting_value) VALUES (?,?,?)
+                           ON CONFLICT (tenant_id, setting_key) DO UPDATE SET setting_value=EXCLUDED.setting_value")
+                ->execute([$tenant_id, $f, $val]);
         }
         $_SESSION['flash_settings'] = ['type'=>'success','msg'=>'Informasi pembayaran berhasil disimpan.'];
         header('Location: settings.php'); exit;
@@ -59,8 +64,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $val = trim($_POST[$f] ?? '');
             // Validasi format hex warna
             if (preg_match('/^#[0-9A-Fa-f]{6}$/', $val)) {
-                $pdo->prepare("INSERT INTO settings (setting_key, setting_value) VALUES (?,?) ON DUPLICATE KEY UPDATE setting_value=?")
-                    ->execute([$f, $val, $val]);
+                $pdo->prepare("INSERT INTO settings (tenant_id, setting_key, setting_value) VALUES (?,?,?)
+                               ON CONFLICT (tenant_id, setting_key) DO UPDATE SET setting_value=EXCLUDED.setting_value")
+                    ->execute([$tenant_id, $f, $val]);
             }
         }
         $_SESSION['flash_settings'] = ['type'=>'success','msg'=>'Tampilan & warna berhasil disimpan. Refresh halaman publik untuk melihat perubahan.'];
@@ -74,8 +80,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'color_navy_light'=> '#1E293B',
         ];
         foreach ($defaults as $k => $v) {
-            $pdo->prepare("INSERT INTO settings (setting_key, setting_value) VALUES (?,?) ON DUPLICATE KEY UPDATE setting_value=?")
-                ->execute([$k, $v, $v]);
+            $pdo->prepare("INSERT INTO settings (tenant_id, setting_key, setting_value) VALUES (?,?,?)
+                           ON CONFLICT (tenant_id, setting_key) DO UPDATE SET setting_value=EXCLUDED.setting_value")
+                ->execute([$tenant_id, $k, $v]);
         }
         $_SESSION['flash_settings'] = ['type'=>'success','msg'=>'Warna berhasil direset ke default.'];
         header('Location: settings.php?tab=tampilan'); exit;
@@ -84,8 +91,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $old = $_POST['password_lama'] ?? '';
         $new = $_POST['password_baru'] ?? '';
         $cnf = $_POST['password_konfirmasi'] ?? '';
-        $user = $pdo->prepare("SELECT * FROM users WHERE id=?");
-        $user->execute([$_SESSION['user_id']]);
+        $user = $pdo->prepare("SELECT * FROM users WHERE id=? AND tenant_id=?");
+        $user->execute([$_SESSION['user_id'], $tenant_id]);
         $user = $user->fetch();
         if (!password_verify($old, $user['password'])) {
             $flash = ['type'=>'danger','msg'=>'Password lama tidak sesuai.'];
@@ -103,21 +110,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $s = [
-    'nama_lembaga'    => getSetting($pdo, 'nama_lembaga'),
-    'tagline'         => getSetting($pdo, 'tagline'),
-    'alamat'          => getSetting($pdo, 'alamat'),
-    'no_telp'         => getSetting($pdo, 'no_telp'),
-    'email_lembaga'   => getSetting($pdo, 'email_lembaga'),
-    'website'         => getSetting($pdo, 'website'),
-    'nama_bank'       => getSetting($pdo, 'nama_bank'),
-    'no_rekening'     => getSetting($pdo, 'no_rekening'),
-    'nama_rekening'   => getSetting($pdo, 'nama_rekening'),
-    'instruksi_bayar' => getSetting($pdo, 'instruksi_bayar'),
-    'logo'            => getSetting($pdo, 'logo'),
-    'color_primary'   => getSetting($pdo, 'color_primary',    '#FF6A00'),
-    'color_secondary' => getSetting($pdo, 'color_secondary',  '#00D2FF'),
-    'color_navy'      => getSetting($pdo, 'color_navy',       '#0F172A'),
-    'color_navy_light'=> getSetting($pdo, 'color_navy_light', '#1E293B'),
+    'nama_lembaga'    => getSetting($pdo, 'nama_lembaga',    '', $tenant_id),
+    'tagline'         => getSetting($pdo, 'tagline',         '', $tenant_id),
+    'alamat'          => getSetting($pdo, 'alamat',          '', $tenant_id),
+    'no_telp'         => getSetting($pdo, 'no_telp',         '', $tenant_id),
+    'email_lembaga'   => getSetting($pdo, 'email_lembaga',   '', $tenant_id),
+    'website'         => getSetting($pdo, 'website',         '', $tenant_id),
+    'nama_bank'       => getSetting($pdo, 'nama_bank',       '', $tenant_id),
+    'no_rekening'     => getSetting($pdo, 'no_rekening',     '', $tenant_id),
+    'nama_rekening'   => getSetting($pdo, 'nama_rekening',   '', $tenant_id),
+    'instruksi_bayar' => getSetting($pdo, 'instruksi_bayar', '', $tenant_id),
+    'logo'            => getSetting($pdo, 'logo',            '', $tenant_id),
+    'color_primary'   => getSetting($pdo, 'color_primary',    '#FF6A00', $tenant_id),
+    'color_secondary' => getSetting($pdo, 'color_secondary',  '#00D2FF', $tenant_id),
+    'color_navy'      => getSetting($pdo, 'color_navy',       '#0F172A', $tenant_id),
+    'color_navy_light'=> getSetting($pdo, 'color_navy_light', '#1E293B', $tenant_id),
 ];
 $brand = getTenantBranding($pdo);
 $active_tab = $_GET['tab'] ?? 'info';

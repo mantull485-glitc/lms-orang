@@ -2,6 +2,7 @@
 session_start();
 require_once '../config/tenant_guard.php';
 require_once '../config/database.php';
+$tenant_id = $GLOBALS['tenant_id'] ?? 0;
 
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
     header("Location: ../auth/login.php");
@@ -20,8 +21,8 @@ if ($action === 'add_process' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $harga = isset($_POST['harga']) && $_POST['harga'] !== '' ? intval($_POST['harga']) : 0;
     $harga_spesial = isset($_POST['harga_spesial']) && $_POST['harga_spesial'] !== '' ? intval($_POST['harga_spesial']) : null;
 
-    $stmt = $pdo->prepare("INSERT INTO classes (nama_kelas, deskripsi, harga, harga_spesial, jadwal, link_zoom, kategori) VALUES (?, ?, ?, ?, ?, ?, ?)");
-    if ($stmt->execute([$nama, $deskripsi, $harga, $harga_spesial, $jadwal, $link, $kategori])) {
+    $stmt = $pdo->prepare("INSERT INTO classes (tenant_id, nama_kelas, deskripsi, harga, harga_spesial, jadwal, link_zoom, kategori) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+    if ($stmt->execute([$tenant_id, $nama, $deskripsi, $harga, $harga_spesial, $jadwal, $link, $kategori])) {
         $_SESSION['flash_message'] = "Kelas berhasil ditambahkan!";
     } else {
         $_SESSION['flash_error'] = "Gagal menambahkan kelas.";
@@ -41,8 +42,8 @@ if ($action === 'edit_process' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $harga = isset($_POST['harga']) && $_POST['harga'] !== '' ? intval($_POST['harga']) : 0;
     $harga_spesial = isset($_POST['harga_spesial']) && $_POST['harga_spesial'] !== '' ? intval($_POST['harga_spesial']) : null;
 
-    $stmt = $pdo->prepare("UPDATE classes SET nama_kelas=?, deskripsi=?, harga=?, harga_spesial=?, jadwal=?, link_zoom=?, kategori=? WHERE id=?");
-    if ($stmt->execute([$nama, $deskripsi, $harga, $harga_spesial, $jadwal, $link, $kategori, $id])) {
+    $stmt = $pdo->prepare("UPDATE classes SET nama_kelas=?, deskripsi=?, harga=?, harga_spesial=?, jadwal=?, link_zoom=?, kategori=? WHERE id=? AND tenant_id=?");
+    if ($stmt->execute([$nama, $deskripsi, $harga, $harga_spesial, $jadwal, $link, $kategori, $id, $tenant_id])) {
         $_SESSION['flash_message'] = "Kelas berhasil diupdate!";
     } else {
         $_SESSION['flash_error'] = "Gagal mengupdate kelas.";
@@ -53,15 +54,16 @@ if ($action === 'edit_process' && $_SERVER['REQUEST_METHOD'] === 'POST') {
 
 // Handle Delete Class
 if ($action === 'delete' && isset($_GET['id'])) {
-    $stmt = $pdo->prepare("DELETE FROM classes WHERE id = ?");
-    $stmt->execute([$_GET['id']]);
+    $stmt = $pdo->prepare("DELETE FROM classes WHERE id = ? AND tenant_id = ?");
+    $stmt->execute([$_GET['id'], $tenant_id]);
     $_SESSION['flash_message'] = "Kelas berhasil dihapus!";
     header("Location: classes.php");
     exit;
 }
 
 // Fetch classes
-$stmt_classes = $pdo->query("SELECT * FROM classes ORDER BY jadwal ASC");
+$stmt_classes = $pdo->prepare("SELECT * FROM classes WHERE tenant_id = ? ORDER BY jadwal ASC");
+$stmt_classes->execute([$tenant_id]);
 $classes = $stmt_classes->fetchAll();
 ?>
 <!DOCTYPE html>
@@ -87,8 +89,8 @@ $classes = $stmt_classes->fetchAll();
                     $is_edit = $action === 'edit';
                     $edit_class = null;
                     if ($is_edit && isset($_GET['id'])) {
-                        $stmt = $pdo->prepare("SELECT * FROM classes WHERE id = ?");
-                        $stmt->execute([$_GET['id']]);
+                        $stmt = $pdo->prepare("SELECT * FROM classes WHERE id = ? AND tenant_id = ?");
+                        $stmt->execute([$_GET['id'], $tenant_id]);
                         $edit_class = $stmt->fetch();
                     }
                 ?>
@@ -198,8 +200,8 @@ $classes = $stmt_classes->fetchAll();
                                 <?php if(count($classes) > 0): ?>
                                     <?php foreach($classes as $c): ?>
                                         <?php 
-                                            $p_stmt = $pdo->prepare("SELECT COUNT(*) FROM registrations WHERE class_id = ? AND status = 'diterima'");
-                                            $p_stmt->execute([$c['id']]);
+                                            $p_stmt = $pdo->prepare("SELECT COUNT(*) FROM registrations WHERE class_id = ? AND tenant_id = ? AND status = 'diterima'");
+                                            $p_stmt->execute([$c['id'], $tenant_id]);
                                             $participants = $p_stmt->fetchColumn();
                                         ?>
                                         <tr>

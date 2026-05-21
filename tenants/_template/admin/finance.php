@@ -2,6 +2,7 @@
 session_start();
 require_once '../config/tenant_guard.php';
 require_once '../config/database.php';
+$tenant_id = $GLOBALS['tenant_id'] ?? 0;
 
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
     header("Location: ../auth/login.php");
@@ -14,11 +15,11 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['fin_action'], $_POST['reg_id'])) {
     $reg_id = intval($_POST['reg_id']);
     if ($_POST['fin_action'] === 'approve') {
-        $pdo->prepare("UPDATE registrations SET status='diterima', tanggal_konfirmasi=NOW() WHERE id=?")->execute([$reg_id]);
+        $pdo->prepare("UPDATE registrations SET status='diterima', tanggal_konfirmasi=NOW() WHERE id=? AND tenant_id=?")->execute([$reg_id, $tenant_id]);
         $_SESSION['flash_finance'] = ['type'=>'success','msg'=>'Pembayaran berhasil dikonfirmasi!'];
     } elseif ($_POST['fin_action'] === 'reject') {
         $catatan = htmlspecialchars(trim($_POST['catatan'] ?? ''));
-        $pdo->prepare("UPDATE registrations SET status='ditolak', catatan_admin=? WHERE id=?")->execute([$catatan, $reg_id]);
+        $pdo->prepare("UPDATE registrations SET status='ditolak', catatan_admin=? WHERE id=? AND tenant_id=?")->execute([$catatan, $reg_id, $tenant_id]);
         $_SESSION['flash_finance'] = ['type'=>'danger','msg'=>'Pembayaran telah ditolak.'];
     }
     $params_qs = [];
@@ -52,14 +53,14 @@ $stmt_income = $pdo->prepare("
     ), 0) as total 
     FROM registrations r 
     JOIN classes c ON r.class_id = c.id
-    WHERE r.status IN ('diterima','selesai') 
-    AND YEAR(r.tanggal_daftar) = ? AND MONTH(r.tanggal_daftar) = ?
+    WHERE r.tenant_id = ? AND r.status IN ('diterima','selesai') 
+    AND EXTRACT(YEAR FROM r.tanggal_daftar) = ? AND EXTRACT(MONTH FROM r.tanggal_daftar) = ?
 ");
-$stmt_income->execute([(int)$filter_tahun, (int)$filter_bulan]);
+$stmt_income->execute([$tenant_id, (int)$filter_tahun, (int)$filter_bulan]);
 $pendapatan_bulan = $stmt_income->fetchColumn();
 
 // Total pendapatan all time
-$total_all = $pdo->query("
+$st_all = $pdo->prepare("
     SELECT COALESCE(SUM(
         CASE WHEN r.harga_saat_daftar > 0 THEN r.harga_saat_daftar
              WHEN c.harga_spesial IS NOT NULL THEN c.harga_spesial
@@ -67,48 +68,53 @@ $total_all = $pdo->query("
     ), 0)
     FROM registrations r
     JOIN classes c ON r.class_id = c.id
-    WHERE r.status IN ('diterima','selesai')
-")->fetchColumn();
+    WHERE r.tenant_id = ? AND r.status IN ('diterima','selesai')
+");
+$st_all->execute([$tenant_id]);
+$total_all = $st_all->fetchColumn();
 
 // Jumlah transaksi bulan ini
 $stmt_trx = $pdo->prepare("
     SELECT COUNT(*) FROM registrations 
-    WHERE status IN ('diterima','selesai') 
-    AND YEAR(tanggal_daftar) = ? AND MONTH(tanggal_daftar) = ?
+    WHERE tenant_id = ? AND status IN ('diterima','selesai') 
+    AND EXTRACT(YEAR FROM tanggal_daftar) = ? AND EXTRACT(MONTH FROM tanggal_daftar) = ?
 ");
-$stmt_trx->execute([(int)$filter_tahun, (int)$filter_bulan]);
+$stmt_trx->execute([$tenant_id, (int)$filter_tahun, (int)$filter_bulan]);
 $jumlah_trx = $stmt_trx->fetchColumn();
 
-// Pending pembayaran (pending yang punya bukti bayar)
-$pending_count = $pdo->query("SELECT COUNT(*) FROM registrations WHERE status = 'pending'")->fetchColumn();
+// Pending pembayaran
+$st_pend = $pdo->prepare("SELECT COUNT(*) FROM registrations WHERE tenant_id = ? AND status = 'pending'");
+$st_pend->execute([$tenant_id]);
+$pending_count = $st_pend->fetchColumn();
 
 // Total ditolak bulan ini
 $stmt_ditolak = $pdo->prepare("
     SELECT COUNT(*) FROM registrations 
-    WHERE status = 'ditolak'
-    AND YEAR(tanggal_daftar) = ? AND MONTH(tanggal_daftar) = ?
+    WHERE tenant_id = ? AND status = 'ditolak'
+    AND EXTRACT(YEAR FROM tanggal_daftar) = ? AND EXTRACT(MONTH FROM tanggal_daftar) = ?
 ");
-$stmt_ditolak->execute([(int)$filter_tahun, (int)$filter_bulan]);
+$stmt_ditolak->execute([$tenant_id, (int)$filter_tahun, (int)$filter_bulan]);
 $ditolak_bulan = $stmt_ditolak->fetchColumn();
 
 // Pending payments WITH bukti_bayar (waiting for verification)
-$stmt_pv = $pdo->query("
+$stmt_pv = $pdo->prepare("
     SELECT r.id, r.tanggal_daftar, r.harga_saat_daftar, r.bukti_bayar,
            u.nama AS nama_peserta, u.email, u.no_hp,
            c.nama_kelas, c.kategori
     FROM registrations r
     JOIN users u ON r.user_id = u.id
     JOIN classes c ON r.class_id = c.id
-    WHERE r.status = 'pending' AND r.bukti_bayar IS NOT NULL AND r.bukti_bayar != ''
+    WHERE r.tenant_id = ? AND r.status = 'pending' AND r.bukti_bayar IS NOT NULL AND r.bukti_bayar != ''
     ORDER BY r.tanggal_daftar ASC
 ");
+$stmt_pv->execute([$tenant_id]);
 $pending_verif = $stmt_pv->fetchAll();
 
 // ==========================================
 // TRANSACTIONS LIST (with filter)
 // ==========================================
 $statusFilter = '';
-$params = [$tgl_awal, $tgl_akhir];
+$params = [$tenant_id, $tgl_awal, $tgl_akhir];
 if ($filter_status !== 'all') {
     $statusFilter = "AND r.status = ?";
     $params[] = $filter_status;
@@ -122,7 +128,7 @@ $stmt_list = $pdo->prepare("
     FROM registrations r
     JOIN users u ON r.user_id = u.id
     JOIN classes c ON r.class_id = c.id
-    WHERE DATE(r.tanggal_daftar) BETWEEN ? AND ?
+    WHERE r.tenant_id = ? AND DATE(r.tanggal_daftar) BETWEEN ? AND ?
     $statusFilter
     ORDER BY r.tanggal_daftar DESC
 ");
@@ -143,12 +149,14 @@ $stmt_per_kelas = $pdo->prepare("
                ELSE 0 END
            ), 0) AS total_pendapatan
     FROM classes c
-    LEFT JOIN registrations r ON r.class_id = c.id AND YEAR(r.tanggal_daftar) = ? AND MONTH(r.tanggal_daftar) = ?
-    GROUP BY c.id
+    LEFT JOIN registrations r ON r.class_id = c.id AND r.tenant_id = ?
+        AND EXTRACT(YEAR FROM r.tanggal_daftar) = ? AND EXTRACT(MONTH FROM r.tanggal_daftar) = ?
+    WHERE c.tenant_id = ?
+    GROUP BY c.id, c.nama_kelas, c.kategori
     ORDER BY total_pendapatan DESC
     LIMIT 8
 ");
-$stmt_per_kelas->execute([(int)$filter_tahun, (int)$filter_bulan]);
+$stmt_per_kelas->execute([$tenant_id, (int)$filter_tahun, (int)$filter_bulan, $tenant_id]);
 $per_kelas = $stmt_per_kelas->fetchAll();
 
 // ==========================================
@@ -162,10 +170,10 @@ for ($m = 1; $m <= 12; $m++) {
     $stmt_m = $pdo->prepare("
         SELECT COALESCE(SUM(harga_saat_daftar),0) 
         FROM registrations 
-        WHERE status IN ('diterima','selesai') 
+        WHERE tenant_id = ? AND status IN ('diterima','selesai') 
         AND DATE(tanggal_daftar) BETWEEN ? AND ?
     ");
-    $stmt_m->execute([$first, $last]);
+    $stmt_m->execute([$tenant_id, $first, $last]);
     $monthly_data[] = (int)$stmt_m->fetchColumn();
 }
 
