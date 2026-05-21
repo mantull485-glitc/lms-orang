@@ -8,6 +8,15 @@
 -- GLOBAL TABLES (Super Admin)
 -- ──────────────────────────────────────────────
 
+CREATE TABLE IF NOT EXISTS superadmins (
+    id SERIAL PRIMARY KEY,
+    nama VARCHAR(100) NOT NULL,
+    username VARCHAR(100) NOT NULL UNIQUE,
+    email VARCHAR(150) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
 CREATE TABLE IF NOT EXISTS superadmin_users (
     id SERIAL PRIMARY KEY,
     nama VARCHAR(100) NOT NULL,
@@ -15,6 +24,7 @@ CREATE TABLE IF NOT EXISTS superadmin_users (
     password VARCHAR(255) NOT NULL,
     created_at TIMESTAMP DEFAULT NOW()
 );
+
 
 CREATE TABLE IF NOT EXISTS packages (
     id SERIAL PRIMARY KEY,
@@ -59,9 +69,10 @@ CREATE TABLE IF NOT EXISTS orders (
     harga INTEGER,
     harga_bayar INTEGER,
     bukti_bayar VARCHAR(255),
-    status VARCHAR(20) DEFAULT 'menunggu',
+    metode_bayar VARCHAR(50),
+    status VARCHAR(20) DEFAULT 'pending',
     catatan TEXT,
-    tanggal_order TIMESTAMP DEFAULT NOW(),
+    created_at TIMESTAMP DEFAULT NOW(),
     tanggal_konfirmasi TIMESTAMP
 );
 
@@ -155,7 +166,9 @@ CREATE TABLE IF NOT EXISTS certificates (
 -- ──────────────────────────────────────────────
 -- DEFAULT SUPERADMIN ACCOUNT
 -- ──────────────────────────────────────────────
--- Password: admin123 (bcrypt hash)
-INSERT INTO superadmin_users (nama, email, password)
-VALUES ('Super Admin', 'admin@platform.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi')
-ON CONFLICT (email) DO NOTHING;
+-- Username: admin | Password: admin123
+-- Ganti password setelah pertama kali login!
+INSERT INTO superadmins (nama, username, email, password)
+VALUES ('Super Admin', 'admin', 'admin@platform.com',
+        '$2y$10$abcdefghijklmnopqrstuuVGZbQ8WtDhEcPvjSPMvVa/BKMO47HBK')
+ON CONFLICT (username) DO NOTHING;
