@@ -60,6 +60,7 @@ $_SERVER['PHP_SELF'] = $targetFile;
 if (file_exists($realPath) && is_file($realPath)) {
     // Jika file PHP, lakukan require
     if (pathinfo($realPath, PATHINFO_EXTENSION) === 'php') {
+        chdir(dirname($realPath)); // Pastikan path relatif seperti ../config/ bekerja dengan benar
         require $realPath;
         exit;
     } else {
@@ -87,6 +88,7 @@ if (file_exists($realPath) && is_file($realPath)) {
     if (is_dir($realPath) && file_exists($indexPath)) {
         $_SERVER['SCRIPT_NAME'] = rtrim($targetFile, '/') . '/index.php';
         $_SERVER['PHP_SELF']    = rtrim($targetFile, '/') . '/index.php';
+        chdir(rtrim($realPath, '/')); // Set CWD ke direktori index
         require $indexPath;
         exit;
     }
