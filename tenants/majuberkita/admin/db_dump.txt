@@ -1,0 +1,73 @@
+Tables: certificates, classes, company_teams, registrations, settings, team_members, users
+
+Table: certificates
+CREATE TABLE `certificates` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `user_id` int(11) NOT NULL,
+  `class_id` int(11) NOT NULL,
+  `nomor_sertifikat` varchar(255) NOT NULL,
+  `file_path` varchar(255) NOT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `unique_user_class_cert` (`user_id`,`class_id`),
+  KEY `class_id` (`class_id`),
+  CONSTRAINT `certificates_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `certificates_ibfk_2` FOREIGN KEY (`class_id`) REFERENCES `classes` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci
+
+Table: classes
+CREATE TABLE `classes` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `nama_kelas` varchar(100) NOT NULL,
+  `kategori` varchar(50) DEFAULT 'Umum',
+  `deskripsi` text DEFAULT NULL,
+  `harga` int(11) DEFAULT 0,
+  `harga_spesial` int(11) DEFAULT NULL,
+  `jadwal` datetime NOT NULL,
+  `link_zoom` varchar(255) DEFAULT NULL,
+  `status` enum('aktif','nonaktif') DEFAULT 'aktif',
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci
+
+Table: company_teams
+CREATE TABLE `company_teams` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `nama` varchar(150) NOT NULL,
+  `jabatan` varchar(150) NOT NULL,
+  `deskripsi` text DEFAULT NULL,
+  `foto` varchar(255) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci
+
+Table: registrations
+CREATE TABLE `registrations` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `user_id` int(11) NOT NULL,
+  `class_id` int(11) NOT NULL,
+  `status` enum('pending','diterima','ditolak','selesai') DEFAULT 'pending',
+  `bukti_bayar` varchar(255) DEFAULT NULL,
+  `harga_saat_daftar` int(11) DEFAULT 0,
+  `metode_pembayaran` varchar(50) DEFAULT NULL,
+  `catatan_admin` text DEFAULT NULL,
+  `tanggal_daftar` timestamp NOT NULL DEFAULT current_timestamp(),
+  `tanggal_konfirmasi` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `unique_user_class` (`user_id`,`class_id`),
+  KEY `class_id` (`class_id`),
+  CONSTRAINT `registrations_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `registrations_ibfk_2` FOREIGN KEY (`class_id`) REFERENCES `classes` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci
+
+Table: settings
+CREATE TABLE `settings` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `setting_key` varchar(50) NOT NULL,
+  `setting_value` text DEFAULT NULL,
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `setting_key` (`setting_key`)
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci
+
+Table: team_members
+Error: SQLSTATE[42S02]: Base table or view not found: 1932 Table 'lunarica_db.team_members' doesn't exist in engine

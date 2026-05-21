@@ -1,0 +1,14 @@
+# Ignore logs and uploads
+logs/*.log
+uploads/payments/*
+uploads/certs/*
+tenants/*/uploads/*
+
+# Ignore dynamic tenant folders if you don't want to push them
+# (Uncomment the line below if you only want to push the system, not the deployed tenants)
+# tenants/lpklunarica/
+# tenants/majuberkita/
+
+# OS generated files
+.DS_Store
+Thumbs.db

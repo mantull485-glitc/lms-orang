@@ -1,0 +1,12 @@
+Options -Indexes
+
+# Block PHP execution in uploads
+<FilesMatch "\.php$">
+    Order Deny,Allow
+    Deny from all
+</FilesMatch>
+
+# Only allow images and PDF
+<FilesMatch "(?i)\.(jpg|jpeg|png|gif|pdf|webp)$">
+    Allow from all
+</FilesMatch>
