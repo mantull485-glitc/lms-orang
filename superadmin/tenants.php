@@ -235,7 +235,8 @@ if (isset($_GET['detail'])) {
                             </td>
                             <td>
                                 <?php
-                                $folder_exists = !empty($t['folder_path']) && is_dir(dirname(__DIR__) . '/' . ltrim($t['folder_path'], '/'));
+                                // Dengan dynamic single-codebase routing, panel admin selalu dapat diakses langsung tanpa copy folder (kompatibel dengan Vercel & Local)
+                                $folder_exists = true;
                                 ?>
                                 <div class="d-flex gap-1 flex-wrap">
 

@@ -5,6 +5,12 @@ ServerSignature Off
 <IfModule mod_rewrite.c>
     RewriteEngine On
 
+    # Dynamic multi-tenant routing (mimics Vercel routing)
+    RewriteCond %{REQUEST_URI} !^/tenants/_template/
+    RewriteRule ^tenants/([^/]+)/$ tenants/_template/index.php [L,QSA]
+    RewriteRule ^tenants/([^/]+)/admin/$ tenants/_template/admin/index.php [L,QSA]
+    RewriteRule ^tenants/([^/]+)/(.*)$ tenants/_template/$2 [L,QSA]
+
     # Block direct access to config folder
     RewriteRule ^config/ - [F,L]
 

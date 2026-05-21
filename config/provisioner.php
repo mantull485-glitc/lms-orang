@@ -25,9 +25,13 @@ function provisionTenant(int $order_id, PDO $pdo_global): array {
     $base_path = dirname(__DIR__);
     $tenant_folder = $base_path . '/tenants/' . $subdomain;
 
-    // 1. Buat folder tenant dari template
-    if (!is_dir($tenant_folder)) {
-        copyDirectory($base_path . '/tenants/_template', $tenant_folder);
+    // 1. Buat folder tenant dari template (Abaikan jika read-only seperti di Vercel)
+    try {
+        if (!is_dir($tenant_folder)) {
+            copyDirectory($base_path . '/tenants/_template', $tenant_folder);
+        }
+    } catch (Exception $e) {
+        // Skip copy in serverless/read-only environments
     }
 
     // 2. Buat database tenant
@@ -71,13 +75,25 @@ function provisionTenant(int $order_id, PDO $pdo_global): array {
         return ['success' => false, 'message' => 'Gagal buat DB: ' . $e->getMessage()];
     }
 
-    // 3. Tulis config/database.php tenant
-    $config_content = generateTenantConfig(SA_DB_HOST, $db_name, SA_DB_USER, SA_DB_PASS);
-    file_put_contents($tenant_folder . '/config/database.php', $config_content);
+    // 3. Tulis config/database.php tenant (Abaikan jika di Vercel)
+    try {
+        if (is_dir($tenant_folder)) {
+            $config_content = generateTenantConfig(SA_DB_HOST, $db_name, SA_DB_USER, SA_DB_PASS);
+            file_put_contents($tenant_folder . '/config/database.php', $config_content);
+        }
+    } catch (Exception $e) {
+        // Skip writing files in read-only environment
+    }
 
-    // 4. Tulis config status_check.php (untuk cek status dari superadmin)
-    $status_content = generateStatusCheck($subdomain);
-    file_put_contents($tenant_folder . '/config/status_check.php', $status_content);
+    // 4. Tulis config status_check.php (untuk cek status dari superadmin, Abaikan jika di Vercel)
+    try {
+        if (is_dir($tenant_folder)) {
+            $status_content = generateStatusCheck($subdomain);
+            file_put_contents($tenant_folder . '/config/status_check.php', $status_content);
+        }
+    } catch (Exception $e) {
+        // Skip writing files in read-only environment
+    }
 
     // 5. Buat akun admin awal untuk pemilik LPK
     $admin_pass = password_hash('admin123', PASSWORD_DEFAULT);

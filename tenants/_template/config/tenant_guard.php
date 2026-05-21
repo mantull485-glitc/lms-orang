@@ -17,16 +17,25 @@ if (!file_exists($sa_config)) return;
 
 require_once $sa_config;
 
-// Baca subdomain dari status_check.php
-$status_config = __DIR__ . '/status_check.php';
-if (file_exists($status_config)) {
-    require_once $status_config;
-    $subdomain = defined('TENANT_SUBDOMAIN') ? TENANT_SUBDOMAIN : '';
-} else {
-    $subdomain = basename(dirname(__DIR__)); // fallback: nama folder tenant
+// Baca subdomain secara dinamis dari URL path (Vercel-compatible)
+$request_uri = $_SERVER['REQUEST_URI'] ?? '';
+$subdomain = '';
+if (preg_match('/\/tenants\/([a-zA-Z0-9_-]+)/', $request_uri, $matches)) {
+    $subdomain = $matches[1];
 }
 
-if (empty($subdomain)) return;
+// Jika tidak ketemu di URL, fallback ke file status_check atau folder
+if ($subdomain === '_template' || empty($subdomain)) {
+    $status_config = __DIR__ . '/status_check.php';
+    if (file_exists($status_config)) {
+        require_once $status_config;
+        $subdomain = defined('TENANT_SUBDOMAIN') ? TENANT_SUBDOMAIN : '';
+    } else {
+        $subdomain = basename(dirname(__DIR__)); // fallback: nama folder tenant
+    }
+}
+
+if (empty($subdomain) || $subdomain === '_template') return;
 
 try {
     $stmt_guard = $pdo_global->prepare(
