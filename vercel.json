@@ -1,38 +1,10 @@
 {
   "functions": {
-    "**/*.php": {
+    "api/index.php": {
       "runtime": "vercel-php@0.7.0"
     }
   },
   "routes": [
-    {
-      "src": "/tenants/([^/]+)/$",
-      "dest": "/tenants/_template/index.php"
-    },
-    {
-      "src": "/tenants/([^/]+)/admin/$",
-      "dest": "/tenants/_template/admin/index.php"
-    },
-    {
-      "src": "/tenants/([^/]+)/admin/(.*)",
-      "dest": "/tenants/_template/admin/$2"
-    },
-    {
-      "src": "/tenants/([^/]+)/classes/(.*)",
-      "dest": "/tenants/_template/classes/$2"
-    },
-    {
-      "src": "/tenants/([^/]+)/config/(.*)",
-      "dest": "/tenants/_template/config/$2"
-    },
-    {
-      "src": "/tenants/([^/]+)/auth/(.*)",
-      "dest": "/tenants/_template/auth/$2"
-    },
-    {
-      "src": "/tenants/([^/]+)/user/(.*)",
-      "dest": "/tenants/_template/user/$2"
-    },
     {
       "src": "/tenants/([^/]+)/uploads/(.*)",
       "dest": "/tenants/_template/uploads/$2"
@@ -42,12 +14,8 @@
       "dest": "/tenants/_template/assets/$2"
     },
     {
-      "src": "/tenants/([^/]+)/([^/]+\\.php)",
-      "dest": "/tenants/_template/$2"
-    },
-    {
       "src": "/(.*)",
-      "dest": "/$1"
+      "dest": "/api/index.php"
     }
   ]
 }
