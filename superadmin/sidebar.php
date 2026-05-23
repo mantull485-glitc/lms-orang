@@ -32,7 +32,7 @@ function sa_active(string $page): string {
         </a>
         <a href="packages.php" class="<?= sa_active('packages.php') ?>">
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
-            Paket & Harga
+            Paket &amp; Harga
         </a>
         <a href="orders.php" class="<?= sa_active('orders.php') ?>">
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
@@ -46,7 +46,7 @@ function sa_active(string $page): string {
         </a>
         <a href="reports.php" class="<?= sa_active('reports.php') ?>">
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
-            Laporan & Analitik
+            Laporan &amp; Analitik
         </a>
 
         <div class="sa-nav-label" style="margin-top:.5rem">Sistem</div>
@@ -71,3 +71,42 @@ function sa_active(string $page): string {
         </a>
     </div>
 </aside>
+
+<!-- Sidebar overlay (mobile backdrop) -->
+<div class="sa-overlay" id="saOverlay" onclick="saCloseSidebar()"></div>
+
+<!-- Mobile top bar (visible ≤ 768px) -->
+<div class="sa-mobile-topbar" id="saMobileTopbar">
+    <button class="sa-hamburger" onclick="saToggleSidebar()" aria-label="Buka menu">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+        </svg>
+    </button>
+    <div class="sa-mobile-brand">
+        Platform<span class="dot">.</span>Admin
+    </div>
+    <div class="sa-avatar" style="width:32px;height:32px;font-size:.8rem;cursor:default">
+        <?= strtoupper(substr($_SESSION['superadmin_nama'] ?? 'S', 0, 1)) ?>
+    </div>
+</div>
+
+<script>
+function saToggleSidebar() {
+    var sidebar  = document.getElementById('saSidebar');
+    var overlay  = document.getElementById('saOverlay');
+    var isOpen   = sidebar.classList.toggle('open');
+    overlay.classList.toggle('show', isOpen);
+    document.body.style.overflow = isOpen ? 'hidden' : '';
+}
+function saCloseSidebar() {
+    document.getElementById('saSidebar').classList.remove('open');
+    document.getElementById('saOverlay').classList.remove('show');
+    document.body.style.overflow = '';
+}
+// Auto-close on nav click (mobile)
+document.querySelectorAll('.sa-nav a').forEach(function(link) {
+    link.addEventListener('click', function() {
+        if (window.innerWidth <= 768) saCloseSidebar();
+    });
+});
+</script>

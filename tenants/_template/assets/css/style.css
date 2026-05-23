@@ -641,12 +641,19 @@ body.dark-theme .bg-white {
 
     /* Table: allow horizontal scroll */
     .table-responsive { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .table-modern { min-width: 580px; }
 
     /* Auth card padding */
     .auth-card-modern { padding: 2rem 1.5rem; }
 
     /* Action group wraps on tablet */
     .action-group { flex-wrap: wrap; }
+
+    /* Page header flex wraps */
+    .d-flex.justify-content-between.align-items-center.mb-5 {
+        flex-wrap: wrap;
+        gap: 0.75rem;
+    }
 
     /* Hero title */
     .hero-section h1 { font-size: 2.2rem !important; }
@@ -673,7 +680,6 @@ body.dark-theme .bg-white {
 
     /* Cards */
     .modern-card { border-radius: 14px; }
-    .modern-card p-4 { padding: 1rem !important; }
 
     /* Finance stat cards 2-column on phone */
     .fin-stat-card { padding: 1rem; border-radius: 14px; }
@@ -695,9 +701,11 @@ body.dark-theme .bg-white {
     .auth-container { padding: 1rem; }
     .auth-card-modern { padding: 1.5rem 1.2rem; border-radius: 20px; }
 
-    /* Table */
+    /* Table — ensure horizontal scroll + smaller text */
+    .table-responsive { overflow-x: auto !important; -webkit-overflow-scrolling: touch; }
+    .table-modern { min-width: 520px; }
     .table-modern thead th,
-    .table-modern tbody td { padding: 0.85rem 0.75rem; font-size: 0.8rem; }
+    .table-modern tbody td { padding: 0.75rem 0.65rem; font-size: 0.78rem; }
 
     /* Footer columns stacked */
     footer .row > div { margin-bottom: 1.5rem; }
@@ -712,9 +720,24 @@ body.dark-theme .bg-white {
 
     /* Action buttons smaller */
     .btn-action-pill { width: 30px; height: 30px; font-size: 0.75rem; border-radius: 8px; }
+    .action-group { gap: 2px; }
 
     /* Badge text */
     .badge-premium { font-size: 0.65rem; padding: 4px 10px; }
+
+    /* Page header: stack title + button */
+    .d-flex.justify-content-between.align-items-center.mb-5 {
+        flex-direction: column;
+        align-items: flex-start !important;
+        gap: 0.75rem;
+        margin-bottom: 1.5rem !important;
+    }
+
+    /* Full-width CTA buttons in headers */
+    .d-flex.justify-content-between.align-items-center.mb-5 .btn {
+        width: 100%;
+        text-align: center;
+    }
 }
 
 /* ============================================================
