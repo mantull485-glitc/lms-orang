@@ -237,9 +237,9 @@ $packages = $pdo_global->query("SELECT * FROM packages WHERE status='aktif' ORDE
             <div class="col-md-4">
                 <div style="font-weight:600;color:#fff;margin-bottom:.75rem">Kontak</div>
                 <div style="color:var(--text-muted);font-size:.88rem;line-height:1.8">
-                    Email: support@platform.com<br>
-                    WhatsApp: 0812-3456-7890<br>
-                    Senin – Jumat, 08.00 – 17.00 WIB
+                    Email: lpk_lunarica@gmail.com<br>
+                    WhatsApp: 081524765812<br>
+                    Senin – Jumat, 08.00 – 16.00 WIB
                 </div>
             </div>
         </div>
