@@ -13,7 +13,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->execute([$order_id]);
         $order = $stmt->fetch();
         if ($order) {
-            if (!empty($order['bukti_bayar'])) {
+            if (!empty($order['bukti_bayar']) && !str_starts_with($order['bukti_bayar'], 'data:')) {
                 $file = dirname(__DIR__) . '/uploads/payments/' . basename($order['bukti_bayar']);
                 if (file_exists($file)) @unlink($file);
             }
@@ -29,7 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($konfirmasi === 'HAPUS SEMUA') {
             $all_orders = $pdo_global->query("SELECT bukti_bayar FROM orders")->fetchAll(PDO::FETCH_COLUMN);
             foreach ($all_orders as $bukti) {
-                if (!empty($bukti)) {
+                if (!empty($bukti) && !str_starts_with($bukti, 'data:')) {
                     $file = dirname(__DIR__) . '/uploads/payments/' . basename($bukti);
                     if (file_exists($file)) @unlink($file);
                 }

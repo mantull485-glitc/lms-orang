@@ -23,35 +23,52 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $errors[] = 'Ukuran file maksimal 3 MB.';
         } else {
             $upload_dir = __DIR__ . '/uploads/payments/';
-            if (!is_dir($upload_dir)) mkdir($upload_dir, 0755, true);
+            if (!is_dir($upload_dir)) @mkdir($upload_dir, 0755, true);
             $filename = 'order_' . time() . '_' . rand(1000,9999) . '.' . $ext;
-            move_uploaded_file($_FILES['bukti_bayar']['tmp_name'], $upload_dir . $filename);
-            $bukti_path = $filename;
+            if (!move_uploaded_file($_FILES['bukti_bayar']['tmp_name'], $upload_dir . $filename)) {
+                // Fallback: simpan sebagai base64 di database jika filesystem tidak tersedia (Vercel)
+                $file_data = file_get_contents($_FILES['bukti_bayar']['tmp_name']);
+                $bukti_path = 'data:' . $_FILES['bukti_bayar']['type'] . ';base64,' . base64_encode($file_data);
+            } else {
+                $bukti_path = $filename;
+            }
         }
     } else {
         $errors[] = 'Bukti pembayaran wajib diunggah.';
     }
 
     if (empty($errors)) {
-        // Simpan order ke database
-        $stmt = $pdo_global->prepare("INSERT INTO orders 
-            (nama_lembaga, nama_pemilik, email, no_telp, subdomain_request, package_id, harga_bayar, metode_bayar, bukti_bayar, status)
-            VALUES (?,?,?,?,?,?,?,?,?,'pending')");
-        $stmt->execute([
-            $order['nama_lembaga'],
-            $order['nama_pemilik'],
-            $order['email'],
-            $order['no_telp'] ?? '',
-            $order['subdomain'],
-            $order['paket_id'],
-            $order['harga'],
-            $_POST['metode_bayar'] ?? 'Transfer',
-            $bukti_path,
-        ]);
-        $order_id = $pdo_global->lastInsertId();
-        $_SESSION['order_success_id'] = $order_id;
-        unset($_SESSION['pending_order']);
-        header('Location: success.php'); exit;
+        try {
+            // Simpan order ke database
+            // Gunakan RETURNING id karena PostgreSQL tidak mendukung lastInsertId() tanpa nama sequence
+            $stmt = $pdo_global->prepare("INSERT INTO orders 
+                (nama_lembaga, nama_pemilik, email, no_telp, subdomain_request, package_id, harga_bayar, metode_bayar, bukti_bayar, status)
+                VALUES (?,?,?,?,?,?,?,?,?,'pending')
+                RETURNING id");
+            $stmt->execute([
+                $order['nama_lembaga'],
+                $order['nama_pemilik'],
+                $order['email'],
+                $order['no_telp'] ?? '',
+                $order['subdomain'],
+                $order['paket_id'],
+                $order['harga'],
+                $_POST['metode_bayar'] ?? 'Transfer',
+                $bukti_path,
+            ]);
+            $row = $stmt->fetch();
+            $order_id = $row['id'] ?? null;
+
+            if (!$order_id) {
+                $errors[] = 'Gagal menyimpan order ke database. Silakan coba lagi.';
+            } else {
+                $_SESSION['order_success_id'] = $order_id;
+                unset($_SESSION['pending_order']);
+                header('Location: success.php'); exit;
+            }
+        } catch (Exception $e) {
+            $errors[] = 'Terjadi kesalahan sistem: ' . $e->getMessage();
+        }
     }
 }
 

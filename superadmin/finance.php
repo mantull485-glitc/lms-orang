@@ -77,7 +77,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Hapus order — berlaku untuk semua status
     if ($action === 'hapus_order' && $order) {
         // Hapus file bukti bayar jika ada
-        if (!empty($order['bukti_bayar'])) {
+        if (!empty($order['bukti_bayar']) && !str_starts_with($order['bukti_bayar'], 'data:')) {
             $file = dirname(__DIR__) . '/uploads/payments/' . basename($order['bukti_bayar']);
             if (file_exists($file)) @unlink($file);
         }
@@ -183,14 +183,21 @@ $counts = $pdo_global->query("SELECT status, COUNT(*) as n FROM orders GROUP BY 
 
                     <div class="col-md-4">
                         <div style="font-size:.82rem;color:var(--text-muted);margin-bottom:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px">Bukti Pembayaran</div>
-                        <?php if ($o['bukti_bayar']): ?>
-                        <a href="../uploads/payments/<?= htmlspecialchars($o['bukti_bayar']) ?>" target="_blank" style="display:block">
-                            <img src="../uploads/payments/<?= htmlspecialchars($o['bukti_bayar']) ?>"
+                        <?php if ($o['bukti_bayar']):
+                            $is_base64 = str_starts_with($o['bukti_bayar'], 'data:');
+                            $img_src   = $is_base64 ? $o['bukti_bayar'] : '../uploads/payments/' . htmlspecialchars($o['bukti_bayar']);
+                        ?>
+                        <a href="<?= $img_src ?>" target="_blank" style="display:block">
+                            <?php if ($is_base64 || !str_ends_with($o['bukti_bayar'], '.pdf')): ?>
+                            <img src="<?= $img_src ?>"
                                  style="width:100%;max-width:200px;border-radius:8px;border:1px solid var(--border);object-fit:cover"
                                  alt="Bukti Bayar" onerror="this.style.display='none'">
+                            <?php else: ?>
+                            <div style="padding:.75rem;background:var(--navy);border-radius:8px;font-size:.82rem;color:var(--cyan)">📄 File PDF</div>
+                            <?php endif; ?>
                         </a>
-                        <a href="../uploads/payments/<?= htmlspecialchars($o['bukti_bayar']) ?>" target="_blank" class="btn-sa-outline mt-2" style="font-size:.78rem;padding:.3rem .7rem;display:inline-flex">
-                            Buka Gambar ↗
+                        <a href="<?= $img_src ?>" target="_blank" class="btn-sa-outline mt-2" style="font-size:.78rem;padding:.3rem .7rem;display:inline-flex">
+                            Buka <?= $is_base64 ? 'Gambar' : (str_ends_with($o['bukti_bayar'], '.pdf') ? 'PDF' : 'Gambar') ?> ↗
                         </a>
                         <?php else: ?>
                         <div style="color:var(--text-muted);font-size:.85rem">Belum ada bukti bayar diunggah.</div>
