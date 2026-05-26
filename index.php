@@ -228,7 +228,7 @@ $packages = $pdo_global->query("SELECT * FROM packages WHERE status='aktif' ORDE
             </div>
             <div class="col-md-4">
                 <div style="font-weight:600;color:#fff;margin-bottom:.75rem">Navigasi</div>
-                <ul style="list-style:none;display:flex;flex-direction:column;gap:.4rem">
+                <ul style="list-style:none;display:flex;flex-direction:column;gap:.4rem;padding-left:0">
                     <li><a href="#fitur" style="color:var(--text-muted);text-decoration:none;font-size:.88rem">Fitur</a></li>
                     <li><a href="#harga" style="color:var(--text-muted);text-decoration:none;font-size:.88rem">Harga</a></li>
                     <li><a href="checkout.php" style="color:var(--text-muted);text-decoration:none;font-size:.88rem">Beli Sekarang</a></li>

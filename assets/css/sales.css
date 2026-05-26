@@ -185,8 +185,91 @@ section { padding: 5rem 0; }
 .sales-form-control option { background: var(--navy-light); }
 .sales-form-label { display: block; font-size: .85rem; color: var(--text-muted); margin-bottom: .4rem; font-weight: 500; }
 
+/* ── RESPONSIVE DESIGN ── */
+@media (max-width: 991px) {
+    section { padding: 4rem 0; }
+    .hero { min-height: auto; padding: 7.5rem 0 3.5rem; }
+    .hero h1 { text-align: center; }
+    .hero p { text-align: center; margin-left: auto; margin-right: auto; }
+    .hero-badge { display: flex; width: max-content; margin-left: auto; margin-right: auto; }
+    .hero-cta { justify-content: center; }
+    .hero-stats { justify-content: center; }
+}
+
 @media (max-width: 768px) {
     .nav-links { display: none; }
-    .hero { padding: 5rem 0 3rem; }
-    .hero-stats { gap: 1.5rem; }
+    .sales-nav {
+        background: #0F172A; /* Solid dark background on mobile to prevent overlapping scroll content */
+        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    }
+}
+
+@media (max-width: 576px) {
+    .sales-nav .container {
+        padding-left: 1.25rem;
+        padding-right: 1.25rem;
+    }
+    .nav-brand {
+        font-size: 1.1rem;
+    }
+    .sales-nav .d-flex.gap-2 {
+        gap: 0.35rem !important;
+    }
+    .btn-outline-sales, .btn-nav {
+        padding: 0.4rem 0.85rem !important;
+        font-size: 0.78rem !important;
+    }
+    .btn-outline-sales {
+        border-color: rgba(255,255,255,0.15) !important;
+    }
+    
+    .hero h1 {
+        font-size: 2.2rem;
+        margin-bottom: 1rem;
+    }
+    .hero p {
+        font-size: 0.95rem;
+        margin-bottom: 1.75rem;
+    }
+    
+    .hero-cta {
+        flex-direction: column;
+        width: 100%;
+        gap: 0.75rem;
+    }
+    .hero-cta .btn-primary-sales, 
+    .hero-cta .btn-outline-sales {
+        width: 100%;
+        justify-content: center;
+        padding: 0.8rem 1.5rem;
+        font-size: 0.95rem;
+    }
+    
+    .hero-stats {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.75rem;
+        margin-top: 2rem;
+        width: 100%;
+    }
+    .hero-stat-val {
+        font-size: 1.4rem;
+    }
+    .hero-stat-label {
+        font-size: 0.7rem;
+    }
+    
+    .feature-card {
+        padding: 1.25rem;
+    }
+    .pricing-card {
+        padding: 1.5rem;
+    }
+    .pricing-price {
+        font-size: 2rem;
+    }
+    
+    .sales-footer ul {
+        padding-left: 0;
+    }
 }
