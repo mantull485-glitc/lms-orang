@@ -55,6 +55,8 @@ $stmt = $pdo_global->prepare("SELECT o.*, p.nama as paket_nama FROM orders o LEF
 $stmt->execute($params);
 $orders = $stmt->fetchAll();
 
+// Hitung juga status 'diterima' dari Midtrans (settlement)
+
 $counts = $pdo_global->query("SELECT status, COUNT(*) as n FROM orders GROUP BY status")->fetchAll(PDO::FETCH_KEY_PAIR);
 $total_revenue = $pdo_global->query("SELECT COALESCE(SUM(harga_bayar),0) FROM orders WHERE status='diterima'")->fetchColumn();
 ?>
@@ -142,6 +144,7 @@ $total_revenue = $pdo_global->query("SELECT COALESCE(SUM(harga_bayar),0) FROM or
                             <th>Lembaga / Pembeli</th>
                             <th>Paket</th>
                             <th>Tagihan</th>
+                            <th>Metode</th>
                             <th>Subdomain</th>
                             <th>Status</th>
                             <th>Tanggal</th>
@@ -150,18 +153,40 @@ $total_revenue = $pdo_global->query("SELECT COALESCE(SUM(harga_bayar),0) FROM or
                     </thead>
                     <tbody>
                     <?php if (empty($orders)): ?>
-                    <tr><td colspan="8"><div class="empty-state">Tidak ada order ditemukan.</div></td></tr>
+                    <tr><td colspan="9"><div class="empty-state">Tidak ada order ditemukan.</div></td></tr>
                     <?php else: foreach ($orders as $o): ?>
+                    <?php
+                        $metode_raw = $o['metode_bayar'] ?? '—';
+                        $metode_icon = match(true) {
+                            str_contains($metode_raw, 'gopay')       => '💚 GoPay',
+                            str_contains($metode_raw, 'shopeepay')   => '🟠 ShopeePay',
+                            str_contains($metode_raw, 'ovo')         => '🟣 OVO',
+                            str_contains($metode_raw, 'dana')        => '🔵 Dana',
+                            str_contains($metode_raw, 'qris')        => '📱 QRIS',
+                            str_contains($metode_raw, 'bank_transfer')=> '🏦 Transfer',
+                            str_contains($metode_raw, 'credit_card') => '💳 Kartu Kredit',
+                            str_contains($metode_raw, 'cstore')      => '🏪 Minimarket',
+                            default => '💰 ' . ucfirst($metode_raw),
+                        };
+                    ?>
                     <tr>
-                        <td>#<?= $o['id'] ?></td>
+                        <td>
+                            #<?= $o['id'] ?>
+                            <?php if (!empty($o['midtrans_order_id'])): ?>
+                            <div><small style="color:var(--text-muted);font-size:.7rem" title="Midtrans Order ID">🔖 <?= htmlspecialchars($o['midtrans_order_id']) ?></small></div>
+                            <?php endif; ?>
+                        </td>
                         <td>
                             <strong><?= htmlspecialchars($o['nama_lembaga']) ?></strong><br>
                             <small class="text-muted-sa"><?= htmlspecialchars($o['email']) ?></small>
                         </td>
                         <td><?= htmlspecialchars($o['paket_nama'] ?? '—') ?></td>
                         <td style="color:#fff;font-weight:600">Rp <?= number_format($o['harga_bayar'], 0, ',', '.') ?></td>
+                        <td style="font-size:.82rem"><?= $metode_icon ?></td>
                         <td><code style="color:var(--cyan);font-size:.8rem"><?= htmlspecialchars($o['subdomain_request'] ?? '—') ?></code></td>
-                        <td><span class="sa-badge badge-<?= $o['status'] ?>"><?= ucfirst($o['status']) ?></span></td>
+                        <td>
+                            <span class="sa-badge badge-<?= $o['status'] ?>"><?= ucfirst($o['status']) ?></span>
+                        </td>
                         <td><?= date('d M Y', strtotime($o['created_at'])) ?></td>
                         <td>
                             <div class="d-flex align-items-center gap-1">
