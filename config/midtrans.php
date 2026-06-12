@@ -1,40 +1,71 @@
 <?php
 // ============================================================
 // KONFIGURASI MIDTRANS
+// Key diambil dari tabel platform_config di Supabase
+// Jalankan migration: INSERT INTO platform_config ...
 // ============================================================
-// Ganti dengan key Anda dari https://dashboard.midtrans.com
-// Sandbox: Setting > Access Keys
-// Production: centang "Use Production Key" lalu ambil key-nya
-// ============================================================
-
-define('MIDTRANS_IS_PRODUCTION', false); // Ganti ke TRUE saat go-live
 
 // Load local overrides untuk development (XAMPP) — tidak ada di production
 $_local_env = __DIR__ . '/local_env.php';
 if (file_exists($_local_env)) require_once $_local_env;
 unset($_local_env);
 
-// Ambil dari environment variable (Vercel / .env lokal)
-// JANGAN hardcode key di sini — gunakan env var!
-define('MIDTRANS_SERVER_KEY_SANDBOX', getenv('MIDTRANS_SERVER_KEY_SBX') ?: '');
-define('MIDTRANS_CLIENT_KEY_SANDBOX', getenv('MIDTRANS_CLIENT_KEY_SBX') ?: '');
+// Pastikan koneksi DB tersedia
+if (!isset($pdo_global)) require_once __DIR__ . '/superadmin_db.php';
 
-// --- PRODUCTION KEYS ---
-define('MIDTRANS_SERVER_KEY_PROD',   getenv('MIDTRANS_SERVER_KEY')     ?: 'Mid-server-XXXXXXXXXXXXXXXX');
-define('MIDTRANS_CLIENT_KEY_PROD',   getenv('MIDTRANS_CLIENT_KEY')     ?: 'Mid-client-XXXXXXXXXXXXXXXX');
+// Ambil config dari database
+function _midtrans_cfg(string $key, string $default = ''): string {
+    global $pdo_global;
+    // Cek env var dulu (untuk Vercel jika sudah di-set)
+    $env_map = [
+        'midtrans_server_key'    => 'MIDTRANS_SERVER_KEY_SBX',
+        'midtrans_client_key'    => 'MIDTRANS_CLIENT_KEY_SBX',
+        'midtrans_is_production' => '',
+    ];
+    if (!empty($env_map[$key])) {
+        $env_val = getenv($env_map[$key]);
+        if ($env_val) return $env_val;
+    }
+    // Fallback: baca dari tabel platform_config
+    try {
+        $stmt = $pdo_global->prepare("SELECT value FROM platform_config WHERE key = ?");
+        $stmt->execute([$key]);
+        $row = $stmt->fetch();
+        return $row ? $row['value'] : $default;
+    } catch (Exception $e) {
+        return $default;
+    }
+}
 
-// ---- Computed (jangan diubah) ----
-define('MIDTRANS_SERVER_KEY', MIDTRANS_IS_PRODUCTION ? MIDTRANS_SERVER_KEY_PROD : MIDTRANS_SERVER_KEY_SANDBOX);
-define('MIDTRANS_CLIENT_KEY', MIDTRANS_IS_PRODUCTION ? MIDTRANS_CLIENT_KEY_PROD : MIDTRANS_CLIENT_KEY_SANDBOX);
-define('MIDTRANS_SNAP_URL',   MIDTRANS_IS_PRODUCTION
-    ? 'https://app.midtrans.com/snap/snap.js'
-    : 'https://app.sandbox.midtrans.com/snap/snap.js');
-define('MIDTRANS_API_URL',    MIDTRANS_IS_PRODUCTION
-    ? 'https://api.midtrans.com/snap/v1/transactions'
-    : 'https://app.sandbox.midtrans.com/snap/v1/transactions');
-define('MIDTRANS_STATUS_URL', MIDTRANS_IS_PRODUCTION
-    ? 'https://api.midtrans.com/v2'
-    : 'https://api.sandbox.midtrans.com/v2');
+$_mt_is_prod  = _midtrans_cfg('midtrans_is_production', 'false') === 'true';
+
+if (!defined('MIDTRANS_IS_PRODUCTION'))
+    define('MIDTRANS_IS_PRODUCTION', $_mt_is_prod);
+
+if (!defined('MIDTRANS_SERVER_KEY'))
+    define('MIDTRANS_SERVER_KEY', $_mt_is_prod
+        ? _midtrans_cfg('midtrans_server_key_prod')
+        : _midtrans_cfg('midtrans_server_key'));
+
+if (!defined('MIDTRANS_CLIENT_KEY'))
+    define('MIDTRANS_CLIENT_KEY', $_mt_is_prod
+        ? _midtrans_cfg('midtrans_client_key_prod')
+        : _midtrans_cfg('midtrans_client_key'));
+
+if (!defined('MIDTRANS_SNAP_URL'))
+    define('MIDTRANS_SNAP_URL', MIDTRANS_IS_PRODUCTION
+        ? 'https://app.midtrans.com/snap/snap.js'
+        : 'https://app.sandbox.midtrans.com/snap/snap.js');
+
+if (!defined('MIDTRANS_API_URL'))
+    define('MIDTRANS_API_URL', MIDTRANS_IS_PRODUCTION
+        ? 'https://api.midtrans.com/snap/v1/transactions'
+        : 'https://app.sandbox.midtrans.com/snap/v1/transactions');
+
+if (!defined('MIDTRANS_STATUS_URL'))
+    define('MIDTRANS_STATUS_URL', MIDTRANS_IS_PRODUCTION
+        ? 'https://api.midtrans.com/v2'
+        : 'https://api.sandbox.midtrans.com/v2');
 
 /**
  * Buat Midtrans Snap Token
