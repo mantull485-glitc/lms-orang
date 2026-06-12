@@ -1,4 +1,5 @@
 <?php
+// Trigger Vercel Deploy 1
 // ============================================================
 // KONFIGURASI DATABASE GLOBAL — Supabase PostgreSQL
 // ============================================================
