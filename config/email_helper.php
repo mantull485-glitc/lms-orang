@@ -9,8 +9,8 @@ function sendEmail(string $to, string $subject, string $html_body, string $from_
     $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
     $headers .= "From: {$from_name} <{$from_email}>\r\n";
     $headers .= "Reply-To: {$from_email}\r\n";
-    $headers .= "X-Mailer: PHP/" . phpversion();
-    return mail($to, $subject, $html_body, $headers);
+    // Gunakan @ untuk menyembunyikan warning jika sendmail tidak tersedia (misal di Vercel Serverless)
+    return @mail($to, $subject, $html_body, $headers);
 }
 
 function emailTemplate(string $title, string $body, string $cta_text = '', string $cta_url = ''): string {
