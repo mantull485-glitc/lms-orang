@@ -3,17 +3,10 @@
 // KONFIGURASI DATABASE GLOBAL — Supabase PostgreSQL
 // ============================================================
 
-// Ambil host dari env var
-$db_host = getenv('DB_HOST') ?: 'aws-1-ap-northeast-1.pooler.supabase.com';
-
-// Jika menggunakan direct host Supabase (db.xxx.supabase.co), Vercel akan gagal karena masalah IPv6.
-// Kita paksa ubah ke connection pooler Supabase (port 6543)
-if (strpos($db_host, 'db.') === 0 && strpos($db_host, '.supabase.co') !== false) {
-    $db_host = 'aws-0-ap-southeast-1.pooler.supabase.com'; // Pooler default region Singapore
-    $db_port = '6543'; // Port khusus pooler
-} else {
-    $db_port = getenv('DB_PORT') ?: '5432';
-}
+// Kita PAKSA menggunakan Pooler Host yang benar, karena setting env var DB_HOST di Vercel 
+// sepertinya menunjuk ke alamat db.xxx.supabase.co yang menyebabkan error IPv6.
+$db_host = 'aws-1-ap-northeast-1.pooler.supabase.com';
+$db_port = '5432';
 
 define('SA_DB_HOST', $db_host);
 define('SA_DB_NAME', getenv('DB_NAME') ?: 'postgres');
