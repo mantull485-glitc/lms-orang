@@ -9,6 +9,9 @@ header('Content-Type: application/json');
 // Tangkap semua error PHP dan kembalikan sebagai JSON (untuk Vercel debugging)
 set_error_handler(function($severity, $message, $file, $line) {
     if (!(error_reporting() & $severity)) return;
+    // Abaikan peringatan deprecation (seperti curl_close)
+    if ($severity === E_DEPRECATED || $severity === E_USER_DEPRECATED) return;
+    
     echo json_encode(['error' => "PHP Error: $message in $file on line $line"]);
     exit;
 });

@@ -89,7 +89,7 @@ function midtrans_create_snap_token(array $params): array {
     ]);
     $response = curl_exec($ch);
     $err      = curl_error($ch);
-    curl_close($ch);
+    // curl_close() is deprecated in PHP 8.5 and has no effect since PHP 8.0
 
     if ($err) return ['error' => $err];
     return json_decode($response, true) ?? ['error' => 'Invalid response'];
@@ -113,7 +113,7 @@ function midtrans_get_status(string $order_id): array {
         CURLOPT_TIMEOUT        => 10,
     ]);
     $response = curl_exec($ch);
-    curl_close($ch);
+    // curl_close() is deprecated in PHP 8.5
 
     return json_decode($response, true) ?? [];
 }
