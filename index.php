@@ -23,7 +23,7 @@ $packages = $pdo_global->query("SELECT * FROM packages WHERE status='aktif' ORDE
             <li><a href="#harga">Harga</a></li>
         </ul>
         <div class="d-flex gap-2">
-            <a href="auth/superadmin_login.php" class="btn-outline-sales" style="padding:.45rem 1rem;font-size:.85rem">Admin</a>
+            <a href="auth/superadmin_login.php" class="btn-outline-sales" style="padding:.45rem 1rem;font-size:.85rem">Login</a>
             <a href="pricing.php" class="btn-nav">Mulai Sekarang</a>
         </div>
     </div>

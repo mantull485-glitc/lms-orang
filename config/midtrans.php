@@ -9,6 +9,11 @@
 
 define('MIDTRANS_IS_PRODUCTION', false); // Ganti ke TRUE saat go-live
 
+// Load local overrides untuk development (XAMPP) — tidak ada di production
+$_local_env = __DIR__ . '/local_env.php';
+if (file_exists($_local_env)) require_once $_local_env;
+unset($_local_env);
+
 // Ambil dari environment variable (Vercel / .env lokal)
 // JANGAN hardcode key di sini — gunakan env var!
 define('MIDTRANS_SERVER_KEY_SANDBOX', getenv('MIDTRANS_SERVER_KEY_SBX') ?: '');

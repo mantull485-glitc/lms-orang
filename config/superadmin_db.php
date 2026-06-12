@@ -3,11 +3,12 @@
 // KONFIGURASI DATABASE GLOBAL — Supabase PostgreSQL
 // ============================================================
 
-define('SA_DB_HOST', getenv('DB_HOST') ?: 'db.tvpgimvjfydligohxwbg.supabase.co');
+define('SA_DB_HOST', getenv('DB_HOST') ?: 'aws-1-ap-northeast-1.pooler.supabase.com');
 define('SA_DB_NAME', getenv('DB_NAME') ?: 'postgres');
-define('SA_DB_USER', getenv('DB_USER') ?: 'postgres');
+define('SA_DB_USER', getenv('DB_USER') ?: 'postgres.tvpgimvjfydligohxwbg');
 define('SA_DB_PASS', getenv('DB_PASS') ?: 'ARMAN.MANUSIA');
 define('SA_DB_PORT', getenv('DB_PORT') ?: '5432');
+
 
 try {
     $pdo_global = new PDO(

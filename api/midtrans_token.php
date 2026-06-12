@@ -22,6 +22,11 @@ $order = $_SESSION['pending_order'];
 $mt_order_id = 'PLK-' . time() . '-' . rand(100, 999);
 $_SESSION['midtrans_order_id'] = $mt_order_id;
 
+$base_dir = rtrim(dirname(dirname($_SERVER['SCRIPT_NAME'])), '/\\');
+$base_url = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'] . ($base_dir === '/' || $base_dir === '\\' ? '' : $base_dir) . '/';
+
+$redirect_page = !empty($order['is_renewal']) ? 'renewal_payment.php' : 'payment.php';
+
 $params = [
     'transaction_details' => [
         'order_id'     => $mt_order_id,
@@ -41,9 +46,9 @@ $params = [
         ]
     ],
     'callbacks' => [
-        'finish'  => (isset($_SERVER['HTTPS']) ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'] . '/success.php',
-        'error'   => (isset($_SERVER['HTTPS']) ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'] . '/payment.php',
-        'pending' => (isset($_SERVER['HTTPS']) ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'] . '/payment.php',
+        'finish'  => $base_url . 'success.php',
+        'error'   => $base_url . $redirect_page,
+        'pending' => $base_url . $redirect_page,
     ],
 ];
 
@@ -53,16 +58,20 @@ if (isset($result['token'])) {
     // Pre-save order ke database dengan status pending
     // Sehingga webhook bisa menemukannya via midtrans_order_id
     try {
+        $tenant_id  = !empty($order['is_renewal']) ? (int)$order['tenant_id'] : null;
+        $catatan    = !empty($order['is_renewal']) ? 'RENEWAL' : null;
+
         $stmt = $pdo_global->prepare("
             INSERT INTO orders
-                (nama_lembaga, nama_pemilik, email, no_telp, subdomain_request,
+                (tenant_id, nama_lembaga, nama_pemilik, email, no_telp, subdomain_request,
                  package_id, harga_bayar, metode_bayar, bukti_bayar,
-                 midtrans_order_id, status)
-            VALUES (?,?,?,?,?,?,?,NULL,NULL,?,'pending')
+                 midtrans_order_id, status, catatan)
+            VALUES (?,?,?,?,?,?,?,?,NULL,NULL,?,'pending',?)
             ON CONFLICT (midtrans_order_id) DO NOTHING
             RETURNING id
         ");
         $stmt->execute([
+            $tenant_id,
             $order['nama_lembaga'],
             $order['nama_pemilik'],
             $order['email'],
@@ -71,6 +80,7 @@ if (isset($result['token'])) {
             $order['paket_id'],
             $order['harga'],
             $mt_order_id,
+            $catatan,
         ]);
         $row = $stmt->fetch();
         $_SESSION['db_order_id'] = $row['id'] ?? null;

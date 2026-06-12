@@ -3,11 +3,11 @@ session_start();
 require_once 'config/superadmin_db.php';
 require_once 'config/midtrans.php';
 
-// Pastikan ada pending order dari session
-if (empty($_SESSION['pending_order'])) {
+// Pastikan ada pending order dari session ATAU kita sedang memproses callback redirect
+if (empty($_SESSION['pending_order']) && empty($_GET['order_id'])) {
     header('Location: checkout.php'); exit;
 }
-$order = $_SESSION['pending_order'];
+$order = $_SESSION['pending_order'] ?? null;
 
 // Handle callback dari Midtrans (redirect finish/pending/error)
 if (!empty($_GET['order_id'])) {
@@ -27,23 +27,64 @@ if (!empty($_GET['order_id'])) {
         default                      => 'pending',
     };
 
-    // Cek apakah order sudah tersimpan (dari webhook)
+    // Cek apakah order sudah tersimpan (dari webhook atau pre-save)
     $existing = $pdo_global->prepare("SELECT id FROM orders WHERE midtrans_order_id = ?");
     $existing->execute([$mt_oid]);
     $existing_row = $existing->fetch();
 
     if ($existing_row) {
-        // Order sudah ada (dari pre-save atau webhook), langsung redirect ke success
+        // Order sudah ada, langsung redirect ke success
         $_SESSION['order_success_id'] = $existing_row['id'];
         $_SESSION['order_status']     = $final_status;
-        // Update status jika berubah
-        $pdo_global->prepare("UPDATE orders SET status=?, metode_bayar=?, updated_at=NOW() WHERE id=?")
-            ->execute([$final_status, $payment_type, $existing_row['id']]);
+        
+        // Ambil data order detail sebelum update
+        $stmt_ord = $pdo_global->prepare("SELECT * FROM orders WHERE id = ?");
+        $stmt_ord->execute([$existing_row['id']]);
+        $ord_det = $stmt_ord->fetch();
+
+        // Jika status sukses dan webhook belum memproses (status masih pending), jalankan aktivasi otomatis di sini untuk instan UX
+        if ($final_status === 'diterima' && $ord_det && $ord_det['status'] === 'pending') {
+            try {
+                require_once 'config/provisioner.php';
+                require_once 'config/email_helper.php';
+                
+                $result = provisionTenant($existing_row['id'], $pdo_global);
+                if ($result['success']) {
+                    // Update metode bayar kembali karena provisionTenant meng-overwrite status & tenant_id
+                    $pdo_global->prepare("UPDATE orders SET status='diterima', metode_bayar=?, updated_at=NOW() WHERE id=?")
+                               ->execute([$payment_type, $existing_row['id']]);
+
+                    // Kirim email notifikasi platform aktif
+                    $pkg_info = $pdo_global->prepare("SELECT nama FROM packages WHERE id=?");
+                    $pkg_info->execute([$ord_det['package_id']]);
+                    $pkg_info = $pkg_info->fetch();
+                    
+                    $base_url = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'] . rtrim(dirname($_SERVER['SCRIPT_NAME']), '/\\') . '/';
+                    
+                    emailPlatformAktif([
+                        'email'        => $ord_det['email'],
+                        'nama_pemilik' => $ord_det['nama_pemilik'],
+                        'nama_lembaga' => $ord_det['nama_lembaga'],
+                        'url'          => $base_url . 'tenants/' . $result['subdomain'] . '/',
+                        'admin_pass'   => $result['admin_pass'],
+                        'paket_nama'   => $pkg_info['nama'] ?? '',
+                        'expire'       => date('d M Y', strtotime('+1 month')),
+                    ]);
+                }
+            } catch (Exception $e) {
+                error_log('payment.php provisioning error: ' . $e->getMessage());
+            }
+        } else {
+            // Update status jika berubah
+            $pdo_global->prepare("UPDATE orders SET status=?, metode_bayar=?, updated_at=NOW() WHERE id=?")
+                ->execute([$final_status, $payment_type, $existing_row['id']]);
+        }
+
         unset($_SESSION['pending_order'], $_SESSION['midtrans_order_id'], $_SESSION['db_order_id']);
         header('Location: success.php'); exit;
     } else {
-        // Webhook belum sampai, simpan manual dari data redirect
-        if ($final_status !== 'ditolak') {
+        // Webhook belum sampai, dan pre-save gagal / tidak ada. Simpan manual dari data redirect jika ada data order
+        if ($final_status !== 'ditolak' && $order) {
             try {
                 $stmt = $pdo_global->prepare("
                     INSERT INTO orders
@@ -65,6 +106,37 @@ if (!empty($_GET['order_id'])) {
                     $mt_oid,
                 ]);
                 $row = $stmt->fetch();
+                
+                // Jika status sukses, jalankan aktivasi otomatis
+                if ($final_status === 'diterima' && !empty($row['id'])) {
+                    require_once 'config/provisioner.php';
+                    require_once 'config/email_helper.php';
+                    
+                    $result = provisionTenant($row['id'], $pdo_global);
+                    if ($result['success']) {
+                        // Update metode bayar kembali
+                        $pdo_global->prepare("UPDATE orders SET status='diterima', metode_bayar=?, updated_at=NOW() WHERE id=?")
+                                   ->execute([$payment_type, $row['id']]);
+
+                        // Kirim email
+                        $pkg_info = $pdo_global->prepare("SELECT nama FROM packages WHERE id=?");
+                        $pkg_info->execute([$order['paket_id']]);
+                        $pkg_info = $pkg_info->fetch();
+                        
+                        $base_url = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'] . rtrim(dirname($_SERVER['SCRIPT_NAME']), '/\\') . '/';
+                        
+                        emailPlatformAktif([
+                            'email'        => $order['email'],
+                            'nama_pemilik' => $order['nama_pemilik'],
+                            'nama_lembaga' => $order['nama_lembaga'],
+                            'url'          => $base_url . 'tenants/' . $result['subdomain'] . '/',
+                            'admin_pass'   => $result['admin_pass'],
+                            'paket_nama'   => $pkg_info['nama'] ?? '',
+                            'expire'       => date('d M Y', strtotime('+1 month')),
+                        ]);
+                    }
+                }
+
                 $_SESSION['order_success_id'] = $row['id'] ?? null;
                 $_SESSION['order_status']     = $final_status;
                 unset($_SESSION['pending_order'], $_SESSION['midtrans_order_id']);
@@ -73,7 +145,11 @@ if (!empty($_GET['order_id'])) {
                 $payment_error = 'Terjadi kesalahan: ' . $e->getMessage();
             }
         } else {
-            $payment_error = 'Pembayaran dibatalkan / ditolak oleh Midtrans. Silakan coba lagi.';
+            if ($final_status === 'ditolak') {
+                $payment_error = 'Pembayaran dibatalkan / ditolak oleh Midtrans. Silakan coba lagi.';
+            } else {
+                header('Location: checkout.php'); exit;
+            }
         }
     }
 }
@@ -172,6 +248,7 @@ if (!empty($_GET['order_id'])) {
                     </div>
 
                     <!-- Total -->
+                    <?php if ($order): ?>
                     <div style="background:rgba(255,106,0,.08);border:1px solid rgba(255,106,0,.2);border-radius:12px;padding:1.25rem;margin-bottom:1.75rem">
                         <div style="display:flex;justify-content:space-between;align-items:center">
                             <div>
@@ -188,6 +265,7 @@ if (!empty($_GET['order_id'])) {
                             </div>
                         </div>
                     </div>
+                    <?php endif; ?>
 
                     <!-- Error container -->
                     <div id="snap-error" style="display:none;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.25);border-radius:10px;padding:.9rem;margin-bottom:1.25rem;color:#EF4444;font-size:.85rem"></div>
@@ -206,6 +284,7 @@ if (!empty($_GET['order_id'])) {
             </div>
 
             <!-- Order Summary -->
+            <?php if ($order): ?>
             <div class="col-lg-5">
                 <div style="background:var(--navy-light);border:1px solid var(--border);border-radius:18px;padding:1.5rem;position:sticky;top:80px">
                     <div style="font-weight:700;color:#fff;margin-bottom:1.2rem">Ringkasan Order</div>
@@ -241,16 +320,17 @@ if (!empty($_GET['order_id'])) {
                     </div>
                 </div>
             </div>
+            <?php endif; ?>
         </div>
     </div>
 </div>
 
 <script>
-const ORDER_DATA = <?= json_encode([
+const ORDER_DATA = <?= json_encode($order ? [
     'harga'        => $order['harga'],
     'paket_nama'   => $order['paket_nama'],
     'nama_lembaga' => $order['nama_lembaga'],
-]) ?>;
+] : []) ?>;
 
 async function startPayment() {
     const btn     = document.getElementById('pay-btn');

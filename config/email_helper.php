@@ -114,3 +114,17 @@ function emailPlatformNonaktif(array $data): bool {
     $html = emailTemplate("Platform Anda Dinonaktifkan", $body, "Hubungi Support", "mailto:support@platform.com");
     return sendEmail($data['email'], "Platform {$data['nama_lembaga']} Telah Dinonaktifkan – Platform LPK", $html);
 }
+
+// ── Template: Renewal Berhasil
+function emailRenewalBerhasil(array $data): bool {
+    $body = "
+        Halo <strong style='color:#fff'>{$data['nama_pemilik']}</strong>,<br><br>
+        Pembayaran perpanjangan paket untuk platform <strong style='color:#fff'>{$data['nama_lembaga']}</strong>
+        telah kami terima.<br><br>
+        Masa aktif platform Anda telah berhasil diperpanjang hingga <strong style='color:#10B981'>{$data['expire']}</strong>.<br><br>
+        Terima kasih atas kepercayaan Anda menggunakan layanan kami.
+    ";
+    $html = emailTemplate("Perpanjangan Paket Berhasil! 🎉", $body, "Buka Platform", $data['url']);
+    return sendEmail($data['email'], "Perpanjangan Paket {$data['nama_lembaga']} Berhasil – Platform LPK", $html);
+}
+

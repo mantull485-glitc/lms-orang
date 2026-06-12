@@ -3,15 +3,21 @@
 -- Jalankan di Supabase SQL Editor
 -- ============================================================
 
--- 1. Tambah kolom midtrans_order_id
+-- 1. Tambah kolom midtrans_order_id dan metode_bayar
 ALTER TABLE orders
     ADD COLUMN IF NOT EXISTS midtrans_order_id VARCHAR(100) DEFAULT NULL;
+
+ALTER TABLE orders
+    ADD COLUMN IF NOT EXISTS metode_bayar VARCHAR(50) DEFAULT NULL;
 
 -- 2. Tambah kolom updated_at jika belum ada
 ALTER TABLE orders
     ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
 
--- 3. Buat index untuk lookup cepat via midtrans_order_id
+-- 3. Buat index dan unique constraint untuk lookup cepat via midtrans_order_id
+ALTER TABLE orders
+    ADD CONSTRAINT uq_orders_midtrans_order_id UNIQUE (midtrans_order_id);
+
 CREATE INDEX IF NOT EXISTS idx_orders_midtrans_order_id
     ON orders (midtrans_order_id);
 

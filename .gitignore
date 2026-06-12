@@ -14,3 +14,7 @@ tenants/*/uploads/*
 Thumbs.db
 
 .vercel
+
+# Local dev overrides (jangan di-commit — berisi API keys)
+config/local_env.php
+test_db.php
