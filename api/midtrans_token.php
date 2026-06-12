@@ -6,6 +6,17 @@
 session_start();
 header('Content-Type: application/json');
 
+// Tangkap semua error PHP dan kembalikan sebagai JSON (untuk Vercel debugging)
+set_error_handler(function($severity, $message, $file, $line) {
+    if (!(error_reporting() & $severity)) return;
+    echo json_encode(['error' => "PHP Error: $message in $file on line $line"]);
+    exit;
+});
+set_exception_handler(function($e) {
+    echo json_encode(['error' => "PHP Exception: " . $e->getMessage()]);
+    exit;
+});
+
 require_once dirname(__DIR__) . '/config/superadmin_db.php';
 require_once dirname(__DIR__) . '/config/midtrans.php';
 
