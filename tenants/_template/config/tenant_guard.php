@@ -24,6 +24,23 @@ if (preg_match('/\/tenants\/([a-zA-Z0-9_-]+)/', $request_uri, $matches)) {
     $subdomain = $matches[1];
 }
 
+// Cek jika diakses lewat custom domain
+if (empty($subdomain) || $subdomain === '_template') {
+    $host = $_SERVER['HTTP_HOST'] ?? '';
+    if (!empty($host) && !in_array($host, ['localhost', '127.0.0.1']) && !str_ends_with($host, '.vercel.app') && !str_contains($host, '192.168.')) {
+        try {
+            $stmt_host = $pdo_global->prepare("SELECT subdomain FROM tenants WHERE custom_domain = ? AND status = 'aktif' LIMIT 1");
+            $stmt_host->execute([$host]);
+            $res_host = $stmt_host->fetch();
+            if ($res_host) {
+                $subdomain = $res_host['subdomain'];
+            }
+        } catch (Exception $e) {
+            // Abaikan jika database bermasalah
+        }
+    }
+}
+
 // Jika tidak ketemu di URL, fallback ke file status_check atau folder
 if ($subdomain === '_template' || empty($subdomain)) {
     $status_config = __DIR__ . '/status_check.php';

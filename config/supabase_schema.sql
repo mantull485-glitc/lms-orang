@@ -46,6 +46,7 @@ CREATE TABLE IF NOT EXISTS tenants (
     email VARCHAR(150) NOT NULL UNIQUE,
     no_telp VARCHAR(20),
     subdomain VARCHAR(100) UNIQUE,
+    custom_domain VARCHAR(255) UNIQUE DEFAULT NULL,
     db_name VARCHAR(100),
     folder_path VARCHAR(255),
     package_id INTEGER REFERENCES packages(id),

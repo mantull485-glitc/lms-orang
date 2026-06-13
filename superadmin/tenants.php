@@ -99,6 +99,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'], $_POST['ten
             if ($hapus_db)     $msg .= ' Database dihapus.';
             if ($hapus_folder) $msg .= ' Folder dihapus.';
             $_SESSION['flash_tenants'] = ['type'=>'danger','msg'=>$msg];
+        } elseif ($action === 'edit_tenant') {
+            $subdomain     = preg_replace('/[^a-z0-9_]/', '', strtolower($_POST['subdomain'] ?? ''));
+            $custom_domain = htmlspecialchars(trim($_POST['custom_domain'] ?? ''));
+            if (empty($custom_domain)) $custom_domain = null;
+
+            // Cek subdomain unik
+            $check = $pdo_global->prepare("SELECT id FROM tenants WHERE subdomain = ? AND id != ?");
+            $check->execute([$subdomain, $tid]);
+            if ($check->fetch()) {
+                $_SESSION['flash_tenants'] = ['type'=>'danger','msg'=>'Subdomain "'.$subdomain.'" sudah digunakan oleh tenant lain.'];
+            } else {
+                // Cek custom domain unik jika tidak null
+                $domain_ok = true;
+                if ($custom_domain) {
+                    $check_d = $pdo_global->prepare("SELECT id FROM tenants WHERE custom_domain = ? AND id != ?");
+                    $check_d->execute([$custom_domain, $tid]);
+                    if ($check_d->fetch()) {
+                        $domain_ok = false;
+                        $_SESSION['flash_tenants'] = ['type'=>'danger','msg'=>'Custom Domain "'.$custom_domain.'" sudah digunakan oleh tenant lain.'];
+                    }
+                }
+                
+                if ($domain_ok) {
+                    $pdo_global->prepare("UPDATE tenants SET subdomain = ?, custom_domain = ? WHERE id = ?")
+                               ->execute([$subdomain, $custom_domain, $tid]);
+                    $_SESSION['flash_tenants'] = ['type'=>'success','msg'=>'Data tenant berhasil diubah.'];
+                }
+            }
         }
     }
     header('Location: tenants.php'); exit;
@@ -212,7 +240,12 @@ if (isset($_GET['detail'])) {
                             </td>
                             <td>
                                 <?php if ($t['subdomain']): ?>
+                                <small class="text-muted-sa" style="font-size:.72rem">Subdomain:</small><br>
                                 <code style="color:var(--cyan);font-size:.8rem"><?= htmlspecialchars($t['subdomain']) ?></code><br>
+                                <?php if (!empty($t['custom_domain'])): ?>
+                                <small class="text-muted-sa" style="font-size:.72rem">Custom Domain:</small><br>
+                                <code style="color:#10B981;font-size:.8rem"><?= htmlspecialchars($t['custom_domain']) ?></code><br>
+                                <?php endif; ?>
                                 <a href="../tenants/<?= htmlspecialchars($t['subdomain']) ?>/" target="_blank" style="font-size:.78rem;color:var(--text-muted);text-decoration:none">
                                     Buka platform ↗
                                 </a>
@@ -261,6 +294,13 @@ if (isset($_GET['detail'])) {
                                         <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
                                         Log
                                     </a>
+
+                                    <!-- Edit Domain -->
+                                    <button onclick="showEditModal(<?= $t['id'] ?>, '<?= htmlspecialchars(addslashes($t['nama_lembaga'])) ?>', '<?= htmlspecialchars(addslashes($t['subdomain'] ?? '')) ?>', '<?= htmlspecialchars(addslashes($t['custom_domain'] ?? '')) ?>')"
+                                            class="btn-sa-outline" style="font-size:.75rem;padding:.3rem .6rem;border-color:var(--orange);color:var(--orange)" title="Edit Domain & Subdomain">
+                                        <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                                        Edit Domain
+                                    </button>
 
                                     <?php if ($t['status'] === 'aktif'): ?>
                                     <!-- Nonaktifkan -->
@@ -412,6 +452,34 @@ if (isset($_GET['detail'])) {
                 </button>
             </div>
         </form>
+    <!-- Modal Edit Domain & Subdomain -->
+<div class="sa-modal-backdrop" id="modalEdit">
+    <div class="sa-modal" style="max-width:480px">
+        <div class="sa-modal-title">⚙️ Edit Domain & Subdomain</div>
+        <p style="color:var(--text-sub);font-size:.9rem;margin-bottom:1.2rem">
+            Atur subdomain dan custom domain untuk: <strong id="editNamaTenant" style="color:#fff"></strong>
+        </p>
+        <form method="POST" id="formEdit">
+            <input type="hidden" name="action" value="edit_tenant">
+            <input type="hidden" name="tenant_id" id="editTenantId">
+            
+            <div class="sa-form-group mb-3">
+                <label class="form-label" style="font-size:.85rem;color:var(--text-sub)">Subdomain Request</label>
+                <input type="text" name="subdomain" id="editSubdomain" class="sa-form-control" required placeholder="lpk-lunarica" pattern="^[a-z0-9_-]+$">
+                <small class="text-muted-sa" style="font-size:.72rem">Hanya huruf kecil, angka, strip (-), dan underscore (_).</small>
+            </div>
+
+            <div class="sa-form-group mb-3">
+                <label class="form-label" style="font-size:.85rem;color:var(--text-sub)">Custom Domain</label>
+                <input type="text" name="custom_domain" id="editCustomDomain" class="sa-form-control" placeholder="lpk-lunarica.com">
+                <small class="text-muted-sa" style="font-size:.72rem">Kosongkan jika hanya ingin menggunakan subdomain default platform.</small>
+            </div>
+
+            <div class="d-flex gap-2 justify-content-end mt-4">
+                <button type="button" onclick="closeEditModal()" class="btn-sa-outline">Batal</button>
+                <button type="submit" class="btn-sa-primary" style="padding:.5rem 1.2rem">Simpan Perubahan</button>
+            </div>
+        </form>
     </div>
 </div>
 
@@ -427,6 +495,20 @@ function closeModal() {
 }
 document.getElementById('modalNonaktif').addEventListener('click', function(e) {
     if (e.target === this) closeModal();
+});
+
+function showEditModal(id, nama, subdomain, customDomain) {
+    document.getElementById('editTenantId').value = id;
+    document.getElementById('editNamaTenant').textContent = nama;
+    document.getElementById('editSubdomain').value = subdomain;
+    document.getElementById('editCustomDomain').value = customDomain;
+    document.getElementById('modalEdit').classList.add('show');
+}
+function closeEditModal() {
+    document.getElementById('modalEdit').classList.remove('show');
+}
+document.getElementById('modalEdit').addEventListener('click', function(e) {
+    if (e.target === this) closeEditModal();
 });
 
 let _hapusNama = '';

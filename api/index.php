@@ -8,6 +8,23 @@ $uri = $_SERVER['REQUEST_URI'] ?? '/';
 // Ambil URL path tanpa query parameters
 $path = parse_url($uri, PHP_URL_PATH);
 
+// Deteksi Custom Domain Tenant
+$host = $_SERVER['HTTP_HOST'] ?? '';
+if (!empty($host) && !in_array($host, ['localhost', '127.0.0.1']) && !str_ends_with($host, '.vercel.app') && !str_contains($host, '192.168.')) {
+    try {
+        require_once dirname(__DIR__) . '/config/superadmin_db.php';
+        $stmt = $pdo_global->prepare("SELECT subdomain FROM tenants WHERE custom_domain = ? AND status = 'aktif' LIMIT 1");
+        $stmt->execute([$host]);
+        $tenant = $stmt->fetch();
+        if ($tenant) {
+            // Rewrite path secara internal agar diarahkan ke folder tenant terkait
+            $path = '/tenants/' . $tenant['subdomain'] . $path;
+        }
+    } catch (Exception $e) {
+        // Abaikan jika ada masalah koneksi database
+    }
+}
+
 // Daftar aturan rewrite untuk Multi-Tenancy
 $rules = [
     // 1. Tenants index (landing page tenant)
