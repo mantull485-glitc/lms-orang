@@ -58,12 +58,34 @@ if (empty($subdomain) || $subdomain === '_template') return;
 
 try {
     $stmt_guard = $pdo_global->prepare(
-        "SELECT status, nama_lembaga, alasan_nonaktif FROM tenants WHERE subdomain = ?"
+        "SELECT status, nama_lembaga, alasan_nonaktif, custom_domain FROM tenants WHERE subdomain = ?"
     );
     $stmt_guard->execute([$subdomain]);
     $tenant_info = $stmt_guard->fetch();
 } catch (Exception $e) {
     return; // DB error: lewati guard
+}
+
+// FORCE REDIRECT: Jika punya custom domain tapi diakses via platform/vercel
+if ($tenant_info && $tenant_info['status'] === 'aktif' && !empty($tenant_info['custom_domain'])) {
+    $current_host = $_SERVER['HTTP_HOST'] ?? '';
+    // Jika host saat ini BUKAN custom domain (berarti masih pakai URL vercel/localhost)
+    if (strcasecmp($current_host, $tenant_info['custom_domain']) !== 0) {
+        $scheme = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') ? 'https' : 'http';
+        
+        // Bersihkan prefix path /tenants/subdomain dari URL
+        $path = $_SERVER['REQUEST_URI'] ?? '/';
+        $prefix = "/tenants/$subdomain";
+        if (str_starts_with($path, $prefix)) {
+            $path = substr($path, strlen($prefix));
+        }
+        if (empty($path)) $path = '/';
+
+        $redirect_url = $scheme . '://' . $tenant_info['custom_domain'] . $path;
+        header("HTTP/1.1 301 Moved Permanently");
+        header("Location: " . $redirect_url);
+        exit;
+    }
 }
 
 if (!$tenant_info || $tenant_info['status'] !== 'aktif') {

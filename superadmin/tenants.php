@@ -263,7 +263,11 @@ if (isset($_GET['detail'])) {
                                 <small class="text-muted-sa" style="font-size:.72rem">Custom Domain:</small><br>
                                 <code style="color:#10B981;font-size:.8rem"><?= htmlspecialchars($t['custom_domain']) ?></code><br>
                                 <?php endif; ?>
-                                <a href="../tenants/<?= htmlspecialchars($t['subdomain']) ?>/" target="_blank" style="font-size:.78rem;color:var(--text-muted);text-decoration:none">
+                                <?php 
+                                    $scheme = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') ? 'https://' : 'http://';
+                                    $platform_url = !empty($t['custom_domain']) ? $scheme . $t['custom_domain'] . '/' : '../tenants/' . htmlspecialchars($t['subdomain']) . '/'; 
+                                ?>
+                                <a href="<?= $platform_url ?>" target="_blank" style="font-size:.78rem;color:var(--text-muted);text-decoration:none">
                                     Buka platform ↗
                                 </a>
                                 <?php else: ?>
@@ -287,7 +291,11 @@ if (isset($_GET['detail'])) {
 
                                     <!-- Buka Admin (aktif + folder ada) -->
                                     <?php if ($t['status'] === 'aktif' && $folder_exists && !empty($t['subdomain'])): ?>
-                                    <a href="../tenants/<?= htmlspecialchars($t['subdomain']) ?>/admin/" target="_blank"
+                                    <?php 
+                                        $scheme = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') ? 'https://' : 'http://';
+                                        $admin_url = !empty($t['custom_domain']) ? $scheme . $t['custom_domain'] . '/admin/' : '../tenants/' . htmlspecialchars($t['subdomain']) . '/admin/'; 
+                                    ?>
+                                    <a href="<?= $admin_url ?>" target="_blank"
                                        class="btn-sa-outline" style="font-size:.75rem;padding:.3rem .6rem;border-color:var(--cyan);color:var(--cyan)" title="Buka Panel Admin Tenant">
                                         <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                                         Admin
