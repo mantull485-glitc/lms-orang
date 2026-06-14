@@ -1,6 +1,7 @@
 <?php
 require_once 'auth_guard.php';
 require_once '../config/provisioner.php';
+require_once '../config/email_helper.php';
 
 $flash = $_SESSION['flash_tenants'] ?? null;
 unset($_SESSION['flash_tenants']);
@@ -122,9 +123,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'], $_POST['ten
                 }
                 
                 if ($domain_ok) {
+                    $old_domain = $tenant['custom_domain'] ?? '';
                     $pdo_global->prepare("UPDATE tenants SET subdomain = ?, custom_domain = ? WHERE id = ?")
                                ->execute([$subdomain, $custom_domain, $tid]);
-                    $_SESSION['flash_tenants'] = ['type'=>'success','msg'=>'Data tenant berhasil diubah.'];
+
+                    // Kirim email notifikasi jika custom domain baru dikonfigurasi
+                    if ($custom_domain && empty($old_domain)) {
+                        $scheme   = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') ? 'https' : 'http';
+                        $url_aktif = $scheme . '://' . $custom_domain . '/';
+                        @emailCustomDomainAktif([
+                            'email'         => $tenant['email'],
+                            'nama_pemilik'  => $tenant['nama_pemilik'],
+                            'nama_lembaga'  => $tenant['nama_lembaga'],
+                            'custom_domain' => $custom_domain,
+                            'url'           => $url_aktif,
+                        ]);
+                        $_SESSION['flash_tenants'] = ['type'=>'success','msg'=>'Custom domain berhasil disimpan. Email notifikasi dikirim ke <strong>' . htmlspecialchars($tenant['email']) . '</strong>.'];
+                    } else {
+                        $_SESSION['flash_tenants'] = ['type'=>'success','msg'=>'Data tenant berhasil diubah.'];
+                    }
                 }
             }
         }
@@ -452,7 +469,10 @@ if (isset($_GET['detail'])) {
                 </button>
             </div>
         </form>
-    <!-- Modal Edit Domain & Subdomain -->
+    </div>
+</div>
+
+<!-- Modal Edit Domain & Subdomain -->
 <div class="sa-modal-backdrop" id="modalEdit">
     <div class="sa-modal" style="max-width:480px">
         <div class="sa-modal-title">⚙️ Edit Domain & Subdomain</div>

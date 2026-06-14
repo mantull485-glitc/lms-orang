@@ -2,7 +2,10 @@
 session_start();
 require_once '../config/tenant_guard.php';
 require_once '../config/database.php';
+require_once '../config/tenant_settings.php';
 $tenant_id = $GLOBALS['tenant_id'] ?? 0;
+$brand     = getTenantBranding($pdo);
+$nama      = $brand['nama_lembaga'];
 
 if (isset($_SESSION['user_id'])) {
     if ($_SESSION['role'] === 'admin') {
@@ -56,11 +59,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - LPK Lunarica</title>
+    <title>Login – <?= htmlspecialchars($nama) ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="../assets/css/style.css">
     <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <?php outputBrandingCSS($brand); ?>
 </head>
 <body class="dark-theme">
 

@@ -6,6 +6,7 @@ require_once '../config/tenant_settings.php';
 
 $brand = getTenantBranding($pdo);
 $nama = $brand['nama_lembaga'];
+$email_lembaga = $brand['email_lembaga'] ?? '';
 
 $stmt = $pdo->prepare("SELECT * FROM classes WHERE tenant_id = ? ORDER BY jadwal ASC");
 $stmt->execute([$GLOBALS['tenant_id'] ?? 0]);
@@ -152,7 +153,7 @@ $classes = $stmt->fetchAll();
                 <i class="fas fa-search text-muted-light fs-3 mb-3 opacity-50"></i>
                 <h5 class="text-white fw-bold mb-2">Tidak menemukan kelas yang Anda cari?</h5>
                 <p class="text-muted-light small mb-4">Kami terus memperbarui kurikulum. Beritahu kami kebutuhan pelatihan Anda.</p>
-                <a href="mailto:info@lunarica.com" class="btn btn-outline-light rounded-pill px-4 text-white">
+                <a href="<?= $email_lembaga ? 'mailto:'.htmlspecialchars($email_lembaga) : 'about.php' ?>" class="btn btn-outline-light rounded-pill px-4 text-white">
                     <i class="fas fa-envelope me-2"></i> Hubungi Kami
                 </a>
             </div>

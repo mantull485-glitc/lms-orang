@@ -2,8 +2,9 @@
 $current_page = basename($_SERVER['PHP_SELF']);
 // Load tenant name for sidebar (database.php already included by parent)
 if (!function_exists('getSetting')) require_once __DIR__ . '/../config/tenant_settings.php';
-$_sidebar_nama = function_exists('getSetting') ? getSetting($pdo, 'nama_lembaga', 'Admin Panel') : 'Admin Panel';
-$_sidebar_logo = function_exists('getSetting') ? getSetting($pdo, 'logo', '') : '';
+$_sidebar_nama   = function_exists('getSetting') ? getSetting($pdo, 'nama_lembaga', 'Admin Panel') : 'Admin Panel';
+$_sidebar_logo   = function_exists('getSetting') ? getSetting($pdo, 'logo', '') : '';
+$_sidebar_url    = function_exists('tenantUrl') ? tenantUrl() : '../index.php';
 ?>
 <div class="admin-sidebar d-flex flex-column">
     <div class="admin-sidebar-header">
@@ -68,7 +69,7 @@ $_sidebar_logo = function_exists('getSetting') ? getSetting($pdo, 'logo', '') : 
             </a>
         </li>
         <li class="nav-item mt-3">
-            <a href="../index.php" target="_blank" class="nav-link text-info bg-info bg-opacity-10 border border-info border-opacity-25 rounded-3">
+            <a href="<?= htmlspecialchars($_sidebar_url) ?>" target="_blank" class="nav-link text-info bg-info bg-opacity-10 border border-info border-opacity-25 rounded-3">
                 <i class="fas fa-globe me-2"></i> Kunjungi Beranda
             </a>
         </li>
@@ -89,7 +90,7 @@ $_sidebar_logo = function_exists('getSetting') ? getSetting($pdo, 'logo', '') : 
                 <i class="fas fa-sign-out-alt me-2 small"></i>Logout
             </a>
         </div>
-        <a href="../index.php" target="_blank" class="btn btn-link btn-sm w-100 text-muted-light text-decoration-none extra-small">
+        <a href="<?= htmlspecialchars($_sidebar_url) ?>" target="_blank" class="btn btn-link btn-sm w-100 text-muted-light text-decoration-none extra-small">
             <i class="fas fa-external-link-alt me-1"></i>Kunjungi Situs
         </a>
     </div>

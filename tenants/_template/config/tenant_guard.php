@@ -17,10 +17,12 @@ if (!file_exists($sa_config)) return;
 
 require_once $sa_config;
 
-// Baca subdomain secara dinamis dari URL path (Vercel-compatible)
+// Baca subdomain secara dinamis dari server var, URL path, atau custom domain
 $request_uri = $_SERVER['REQUEST_URI'] ?? '';
 $subdomain = '';
-if (preg_match('/\/tenants\/([a-zA-Z0-9_-]+)/', $request_uri, $matches)) {
+if (isset($_SERVER['TENANT_SUBDOMAIN']) && !empty($_SERVER['TENANT_SUBDOMAIN'])) {
+    $subdomain = $_SERVER['TENANT_SUBDOMAIN'];
+} elseif (preg_match('/\/tenants\/([a-zA-Z0-9_-]+)/', $request_uri, $matches)) {
     $subdomain = $matches[1];
 }
 

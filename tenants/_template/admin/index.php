@@ -2,7 +2,9 @@
 session_start();
 require_once '../config/tenant_guard.php';
 require_once '../config/database.php';
+require_once '../config/tenant_settings.php';
 $tenant_id = $GLOBALS['tenant_id'] ?? 0;
+$brand     = getTenantBranding($pdo);
 
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
     header("Location: ../auth/login.php");
@@ -36,13 +38,14 @@ $recent_regs = $stmt_recent->fetchAll();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard - LPK Lunarica</title>
+    <title><?= htmlspecialchars($brand['nama_lembaga']) ?> – Admin Dashboard</title>
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Custom CSS -->
     <link rel="stylesheet" href="../assets/css/style.css?v=<?= time(); ?>">
-    <!-- FontAwesome 5.15.4 (Stable) -->
+    <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <?php outputBrandingCSS($brand); ?>
 </head>
 <body class="mesh-bg dark-theme">
 
@@ -174,9 +177,18 @@ $recent_regs = $stmt_recent->fetchAll();
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+// Animasi counter untuk stat cards
+document.querySelectorAll('.animate-count').forEach(el => {
+    const target = parseInt(el.dataset.target || '0');
+    let count = 0;
+    const step = Math.max(1, Math.floor(target / 40));
+    const timer = setInterval(() => {
+        count = Math.min(count + step, target);
+        el.textContent = count;
+        if (count >= target) clearInterval(timer);
+    }, 30);
+});
+</script>
 </body>
 </html>

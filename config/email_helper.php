@@ -128,3 +128,25 @@ function emailRenewalBerhasil(array $data): bool {
     return sendEmail($data['email'], "Perpanjangan Paket {$data['nama_lembaga']} Berhasil – Platform LPK", $html);
 }
 
+// ── Template: Custom Domain Dikonfigurasi
+function emailCustomDomainAktif(array $data): bool {
+    $body = "
+        Halo <strong style='color:#fff'>{$data['nama_pemilik']}</strong>,<br><br>
+        Custom domain untuk platform <strong style='color:#fff'>{$data['nama_lembaga']}</strong>
+        telah berhasil dikonfigurasi oleh tim kami.<br><br>
+        <strong style='color:#E2E8F0'>Detail Domain Anda:</strong><br>
+        <table style='width:100%;margin:12px 0;font-size:13px'>
+            <tr><td style='color:#64748B;padding:4px 0;width:140px'>Domain Aktif</td><td style='color:#10B981;font-weight:700'>{$data['custom_domain']}</td></tr>
+            <tr><td style='color:#64748B;padding:4px 0'>URL Platform</td><td><a href='{$data['url']}' style='color:#fff'>{$data['url']}</a></td></tr>
+            <tr><td style='color:#64748B;padding:4px 0'>URL Admin Panel</td><td><a href='{$data['url']}admin/' style='color:#fff'>{$data['url']}admin/</a></td></tr>
+        </table>
+        <div style='background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.2);border-radius:8px;padding:12px;margin-top:12px;font-size:13px;color:#6EE7B7'>
+            ✅ Pastikan DNS domain Anda sudah mengarah ke server kami agar domain dapat diakses.
+            Propagasi DNS biasanya membutuhkan waktu <strong>5–30 menit</strong> setelah konfigurasi.
+        </div>
+    ";
+    $html = emailTemplate("Custom Domain Berhasil Dikonfigurasi! 🌐", $body, "Buka Platform", $data['url']);
+    return sendEmail($data['email'], "Custom Domain {$data['custom_domain']} Aktif – Platform LPK", $html);
+}
+
+

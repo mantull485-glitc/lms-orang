@@ -58,8 +58,14 @@ if ($stmt_check->fetch()) {
     exit;
 }
 
-// Handle Form Submission (Upload)
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['bukti_bayar'])) {
+// Check Midtrans status
+$midtrans_client_key = getSetting($pdo, 'midtrans_client_key', '', $tenant_id);
+$is_production = getSetting($pdo, 'midtrans_is_production', '0', $tenant_id) === '1';
+$midtrans_enabled = !empty($midtrans_client_key);
+$snap_url = $is_production ? 'https://app.midtrans.com/snap/snap.js' : 'https://app.sandbox.midtrans.com/snap/snap.js';
+
+// Handle Form Submission (Upload) - Only for manual payment
+if (!$midtrans_enabled && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['bukti_bayar'])) {
     $file = $_FILES['bukti_bayar'];
     $method = $_POST['metode_pembayaran'] ?? 'transfer_bank';
     
@@ -106,6 +112,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['bukti_bayar'])) {
     <link rel="stylesheet" href="../assets/css/style.css?v=<?= time(); ?>">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <?php outputBrandingCSS($brand); ?>
+    <?php if ($midtrans_enabled): ?>
+    <script src="<?= $snap_url ?>" data-client-key="<?= htmlspecialchars($midtrans_client_key) ?>"></script>
+    <?php endif; ?>
     <style>
         body { padding-top: 65px; }
 
@@ -325,28 +334,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['bukti_bayar'])) {
                             </div>
                         </div>
 
-                        <!-- Upload Form -->
-                        <div class="mb-4">
-                            <label class="form-label fw-bold small text-muted">
-                                Upload Bukti Transfer
-                                <span class="text-danger">*</span>
-                            </label>
-                            <div class="file-upload-area">
-                                <input type="file" name="bukti_bayar"
-                                       class="form-control border-0 shadow-none bg-transparent text-white"
-                                       accept=".jpg,.jpeg,.png,.pdf" required
-                                       style="padding: 0.25rem 0;">
+                        <!-- Form Pembayaran Berdasarkan Konfigurasi -->
+                        <?php if ($midtrans_enabled): ?>
+                            <div class="alert alert-success border-0 bg-success bg-opacity-10 text-success small mb-4">
+                                <i class="fas fa-check-circle me-2"></i> Sistem pembayaran otomatis diaktifkan. Anda dapat memilih QRIS, Virtual Account, atau E-Wallet di halaman selanjutnya.
                             </div>
-                            <div class="mt-2 extra-small text-muted">
-                                <i class="fas fa-info-circle me-1 text-primary"></i>
-                                Format JPG, PNG, atau PDF. Maks. 2MB.
-                            </div>
-                        </div>
+                            
+                            <!-- Error container -->
+                            <div id="snap-error" style="display:none;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.25);border-radius:10px;padding:.9rem;margin-bottom:1.25rem;color:#EF4444;font-size:.85rem"></div>
 
-                        <button type="submit"
-                                class="btn btn-primary w-100 rounded-pill fw-bold py-3 mb-3 shadow-none">
-                            <i class="fas fa-paper-plane me-2"></i>Konfirmasi Pembayaran
-                        </button>
+                            <button type="button" id="pay-btn" onclick="startPayment()"
+                                    class="btn btn-primary w-100 rounded-pill fw-bold py-3 mb-3 shadow-none">
+                                <i class="fas fa-credit-card me-2"></i>Bayar Otomatis (Midtrans)
+                            </button>
+                        <?php else: ?>
+                            <!-- Upload Form (Manual) -->
+                            <div class="mb-4">
+                                <label class="form-label fw-bold small text-muted">
+                                    Upload Bukti Transfer
+                                    <span class="text-danger">*</span>
+                                </label>
+                                <div class="file-upload-area">
+                                    <input type="file" name="bukti_bayar"
+                                           class="form-control border-0 shadow-none bg-transparent text-white"
+                                           accept=".jpg,.jpeg,.png,.pdf" required
+                                           style="padding: 0.25rem 0;">
+                                </div>
+                                <div class="mt-2 extra-small text-muted">
+                                    <i class="fas fa-info-circle me-1 text-primary"></i>
+                                    Format JPG, PNG, atau PDF. Maks. 2MB.
+                                </div>
+                            </div>
+
+                            <button type="submit"
+                                    class="btn btn-primary w-100 rounded-pill fw-bold py-3 mb-3 shadow-none">
+                                <i class="fas fa-paper-plane me-2"></i>Konfirmasi Pembayaran
+                            </button>
+                        <?php endif; ?>
 
                         <a href="../classes/detail.php?id=<?= $class_id ?>"
                            class="btn btn-cancel w-100 rounded-pill py-2">
@@ -372,21 +396,67 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['bukti_bayar'])) {
 <script>
     document.querySelectorAll('.method-option').forEach(opt => {
         opt.addEventListener('click', function() {
-            // Remove active from all options
             document.querySelectorAll('.method-option').forEach(o => o.classList.remove('active'));
-            // Add active to clicked
             this.classList.add('active');
             
-            // Set hidden input value
             const method = this.getAttribute('data-method');
-            document.getElementById('metode_input').value = method;
+            const hiddenInput = document.getElementById('metode_input');
+            if (hiddenInput) hiddenInput.value = method;
             
-            // Hide all instructions
             document.querySelectorAll('.instruction-box').forEach(box => box.classList.remove('active'));
-            // Show selected instruction
-            document.getElementById('instr_' + method).classList.add('active');
+            const instrBox = document.getElementById('instr_' + method);
+            if (instrBox) instrBox.classList.add('active');
         });
     });
+
+    <?php if ($midtrans_enabled): ?>
+    async function startPayment() {
+        const btn = document.getElementById('pay-btn');
+        const errBox = document.getElementById('snap-error');
+
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Memproses...';
+        errBox.style.display = 'none';
+
+        try {
+            const formData = new FormData();
+            formData.append('class_id', <?= $class_id ?>);
+
+            const res = await fetch('../api/midtrans_token.php', { 
+                method: 'POST',
+                body: formData
+            });
+            const data = await res.json();
+
+            if (data.error) throw new Error(data.error);
+
+            window.snap.pay(data.token, {
+                onSuccess: function(result) {
+                    window.location.href = '../user/dashboard.php?payment=success';
+                },
+                onPending: function(result) {
+                    window.location.href = '../user/dashboard.php?payment=pending';
+                },
+                onError: function(result) {
+                    showError('Pembayaran gagal. Silakan coba lagi.');
+                },
+                onClose: function() {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-credit-card me-2"></i>Bayar Otomatis (Midtrans)';
+                }
+            });
+        } catch (e) {
+            showError('Gagal memulai pembayaran: ' + e.message);
+        }
+
+        function showError(msg) {
+            errBox.textContent = '⚠️ ' + msg;
+            errBox.style.display = 'block';
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-credit-card me-2"></i>Bayar Otomatis (Midtrans)';
+        }
+    }
+    <?php endif; ?>
 </script>
 </body>
 </html>

@@ -19,6 +19,7 @@ if (!empty($host) && !in_array($host, ['localhost', '127.0.0.1']) && !str_ends_w
         if ($tenant) {
             // Rewrite path secara internal agar diarahkan ke folder tenant terkait
             $path = '/tenants/' . $tenant['subdomain'] . $path;
+            $_SERVER['TENANT_SUBDOMAIN'] = $tenant['subdomain'];
         }
     } catch (Exception $e) {
         // Abaikan jika ada masalah koneksi database
@@ -45,7 +46,9 @@ $rules = [
     '#^/tenants/([^/]+)/uploads/(.*)$#' => '/tenants/_template/uploads/$2',
     // 9. Tenants assets
     '#^/tenants/([^/]+)/assets/(.*)$#' => '/tenants/_template/assets/$2',
-    // 10. Tenants root php files
+    // 10. Tenants API
+    '#^/tenants/([^/]+)/api/(.*)$#' => '/tenants/_template/api/$2',
+    // 11. Tenants root php files
     '#^/tenants/([^/]+)/([^/]+\.php)$#' => '/tenants/_template/$2',
 ];
 

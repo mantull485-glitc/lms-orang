@@ -2,7 +2,10 @@
 session_start();
 require_once '../config/tenant_guard.php';
 require_once '../config/database.php';
+require_once '../config/tenant_settings.php';
 $tenant_id = $GLOBALS['tenant_id'] ?? 0;
+$brand     = getTenantBranding($pdo);
+$nama      = $brand['nama_lembaga'];
 
 if (isset($_SESSION['user_id'])) {
     if ($_SESSION['role'] === 'admin') {
@@ -59,10 +62,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Daftar - LPK Lunarica</title>
+    <title>Daftar – <?= htmlspecialchars($nama) ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="../assets/css/style.css">
-</head>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <?php outputBrandingCSS($brand); ?>
 <body class="dark-theme">
 
 <div class="auth-container mesh-bg position-relative overflow-hidden">
@@ -81,7 +85,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <i class="fas fa-user-plus text-primary fs-4"></i>
                         </div>
                         <h3 class="fw-black text-white mb-1">Buat Akun</h3>
-                        <p class="text-muted-light small mb-0">Bergabung dengan platform pelatihan LPK Lunarica</p>
+                        <p class="text-muted-light small mb-0">Bergabung dengan <?= htmlspecialchars($nama) ?></p>
                     </div>
                     <div class="card-body">
                         <?php if ($error): ?>
@@ -141,7 +145,5 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<!-- FontAwesome -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </body>
 </html>

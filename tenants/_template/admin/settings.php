@@ -3,7 +3,9 @@ session_start();
 require_once '../config/tenant_guard.php';
 require_once '../config/database.php';
 require_once '../config/tenant_settings.php';
-$tenant_id = $GLOBALS['tenant_id'] ?? 0;
+$tenant_id     = $GLOBALS['tenant_id'] ?? 0;
+$custom_domain = $GLOBALS['custom_domain'] ?? '';
+$subdomain     = $GLOBALS['subdomain'] ?? '';
 
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
     header("Location: ../auth/login.php"); exit;
@@ -47,7 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         header('Location: settings.php'); exit;
 
     } elseif ($action === 'update_payment') {
-        $fields = ['nama_bank','no_rekening','nama_rekening','instruksi_bayar'];
+        $fields = ['nama_bank','no_rekening','nama_rekening','instruksi_bayar','midtrans_server_key','midtrans_client_key','midtrans_is_production'];
         foreach ($fields as $f) {
             $val = trim($_POST[$f] ?? '');
             $pdo->prepare("INSERT INTO settings (tenant_id, setting_key, setting_value) VALUES (?,?,?)
@@ -55,7 +57,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ->execute([$tenant_id, $f, $val]);
         }
         $_SESSION['flash_settings'] = ['type'=>'success','msg'=>'Informasi pembayaran berhasil disimpan.'];
-        header('Location: settings.php'); exit;
+        header('Location: settings.php?tab=payment'); exit;
 
     } elseif ($action === 'update_tampilan') {
         // Simpan warna & setting tampilan
@@ -165,6 +167,7 @@ $active_tab = $_GET['tab'] ?? 'info';
                 <li class="nav-item"><a class="nav-link <?= $active_tab==='info'?'active':'' ?>" href="?tab=info">Informasi Lembaga</a></li>
                 <li class="nav-item"><a class="nav-link <?= $active_tab==='payment'?'active':'' ?>" href="?tab=payment">Pembayaran</a></li>
                 <li class="nav-item"><a class="nav-link <?= $active_tab==='tampilan'?'active':'' ?>" href="?tab=tampilan"><i class="fas fa-palette me-1"></i>Tampilan & Warna</a></li>
+                <li class="nav-item"><a class="nav-link <?= $active_tab==='domain'?'active':'' ?>" href="?tab=domain"><i class="fas fa-globe me-1"></i>Domain & URL</a></li>
                 <li class="nav-item"><a class="nav-link <?= $active_tab==='password'?'active':'' ?>" href="?tab=password">Keamanan</a></li>
             </ul>
 
@@ -240,8 +243,29 @@ $active_tab = $_GET['tab'] ?? 'info';
                                     <input type="text" name="nama_rekening" class="form-control form-control-modern" value="<?= htmlspecialchars($s['nama_rekening']) ?>" placeholder="Nama Pemilik Rekening">
                                 </div>
                                 <div class="col-12">
-                                    <label class="form-label fw-bold small text-muted">Instruksi Pembayaran (Opsional)</label>
+                                    <label class="form-label fw-bold small text-muted">Instruksi Pembayaran Manual (Opsional)</label>
                                     <textarea name="instruksi_bayar" class="form-control form-control-modern" rows="3" placeholder="Contoh: Transfer sesuai nominal, lalu upload bukti pembayaran..."><?= htmlspecialchars($s['instruksi_bayar']) ?></textarea>
+                                </div>
+                                <div class="col-12 mt-5">
+                                    <h6 class="fw-bold mb-3"><i class="fas fa-plug text-primary me-2"></i>Integrasi Midtrans (Pembayaran Otomatis)</h6>
+                                    <div class="alert alert-info border-0 bg-info bg-opacity-10 text-info small mb-4">
+                                        <i class="fas fa-info-circle me-2"></i> Jika kunci Midtrans diisi, sistem pembayaran kelas otomatis beralih dari Manual (upload bukti transfer) menjadi Gateway Midtrans (QRIS, VA, E-Wallet otomatis).
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold small text-muted">Midtrans Client Key</label>
+                                    <input type="text" name="midtrans_client_key" class="form-control form-control-modern" value="<?= htmlspecialchars($s['midtrans_client_key']) ?>" placeholder="SB-Mid-client-...">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold small text-muted">Midtrans Server Key</label>
+                                    <input type="text" name="midtrans_server_key" class="form-control form-control-modern" value="<?= htmlspecialchars($s['midtrans_server_key']) ?>" placeholder="SB-Mid-server-...">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold small text-muted">Environment</label>
+                                    <select name="midtrans_is_production" class="form-select form-control-modern">
+                                        <option value="0" <?= $s['midtrans_is_production'] === '0' ? 'selected' : '' ?>>Sandbox (Testing)</option>
+                                        <option value="1" <?= $s['midtrans_is_production'] === '1' ? 'selected' : '' ?>>Production (Live)</option>
+                                    </select>
                                 </div>
                             </div>
                             <div class="mt-4">
@@ -336,6 +360,133 @@ $active_tab = $_GET['tab'] ?? 'info';
                     </div>
                 </div>
 
+                <!-- Tab: Domain & URL -->
+                <div class="<?= $active_tab==='domain'?'d-block':'d-none' ?>" id="tab-domain">
+                    <?php
+                    $scheme        = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS']==='on') ? 'https' : 'http';
+                    $host          = $_SERVER['HTTP_HOST'] ?? 'localhost';
+                    $default_url   = $scheme.'://'.$host.'/tenants/'.$subdomain.'/';
+                    $active_url    = !empty($custom_domain) ? $scheme.'://'.$custom_domain.'/' : $default_url;
+                    $has_custom    = !empty($custom_domain);
+                    ?>
+
+                    <!-- Kartu URL Aktif -->
+                    <div class="modern-card p-4 mb-4" style="max-width:760px">
+                        <div class="d-flex align-items-center gap-3 mb-4">
+                            <div class="rounded-3 d-flex align-items-center justify-content-center" style="width:48px;height:48px;background:rgba(16,185,129,.12);flex-shrink:0">
+                                <i class="fas fa-check-circle" style="color:#10B981;font-size:1.4rem"></i>
+                            </div>
+                            <div>
+                                <div class="fw-bold text-white mb-1">URL Platform Aktif</div>
+                                <div class="text-muted small">Ini adalah alamat yang bisa diakses oleh siswa Anda</div>
+                            </div>
+                        </div>
+                        <div class="p-3 rounded-4 mb-3" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1)">
+                            <div class="d-flex align-items-center justify-content-between gap-3 flex-wrap">
+                                <div>
+                                    <div class="small text-muted mb-1">URL Aktif</div>
+                                    <a href="<?= htmlspecialchars($active_url) ?>" target="_blank" class="fw-bold text-break" style="color:var(--primary-color);word-break:break-all;text-decoration:none">
+                                        <?= htmlspecialchars($active_url) ?>
+                                        <i class="fas fa-external-link-alt ms-1" style="font-size:.75rem"></i>
+                                    </a>
+                                </div>
+                                <button onclick="copyToClipboard('<?= htmlspecialchars($active_url, ENT_JS) ?>')" class="btn btn-sm rounded-3" style="background:rgba(255,255,255,.08);color:#fff;border:1px solid rgba(255,255,255,.1);white-space:nowrap">
+                                    <i class="fas fa-copy me-1"></i> Salin URL
+                                </button>
+                            </div>
+                        </div>
+
+                        <?php if ($has_custom): ?>
+                        <!-- Status: Custom Domain Aktif -->
+                        <div class="p-3 rounded-4 d-flex align-items-start gap-3" style="background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.2)">
+                            <i class="fas fa-shield-alt mt-1" style="color:#10B981"></i>
+                            <div>
+                                <div class="fw-bold mb-1" style="color:#10B981">Custom Domain Aktif</div>
+                                <div class="small" style="color:#6EE7B7">
+                                    Platform Anda berjalan di domain <strong><?= htmlspecialchars($custom_domain) ?></strong>.
+                                    URL default (<code style="color:#94A3B8"><?= htmlspecialchars($default_url) ?></code>) masih bisa diakses.
+                                </div>
+                            </div>
+                        </div>
+                        <?php else: ?>
+                        <!-- Status: Belum ada custom domain -->
+                        <div class="p-3 rounded-4 d-flex align-items-start gap-3" style="background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2)">
+                            <i class="fas fa-info-circle mt-1" style="color:#F59E0B"></i>
+                            <div class="small" style="color:#FCD34D">
+                                Anda menggunakan URL default platform. Hubungi administrator jika ingin menggunakan domain sendiri seperti <code style="color:#94A3B8">lpk-anda.com</code>.
+                            </div>
+                        </div>
+                        <?php endif; ?>
+                    </div>
+
+                    <!-- Kartu Info Subdomain -->
+                    <div class="modern-card p-4 mb-4" style="max-width:760px">
+                        <h6 class="fw-bold mb-3" style="color:var(--primary-color)"><i class="fas fa-sitemap me-2"></i>Informasi Teknis</h6>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="p-3 rounded-3" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)">
+                                    <div class="extra-small text-muted text-uppercase fw-bold mb-1">Subdomain Internal</div>
+                                    <code style="color:var(--primary-color);font-size:.9rem"><?= htmlspecialchars($subdomain) ?></code>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="p-3 rounded-3" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)">
+                                    <div class="extra-small text-muted text-uppercase fw-bold mb-1">Custom Domain</div>
+                                    <?php if ($has_custom): ?>
+                                        <code style="color:#10B981;font-size:.9rem"><?= htmlspecialchars($custom_domain) ?></code>
+                                    <?php else: ?>
+                                        <span class="small text-muted">Belum dikonfigurasi</span>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Kardu Panduan DNS -->
+                    <?php if (!$has_custom): ?>
+                    <div class="modern-card p-4" style="max-width:760px">
+                        <h6 class="fw-bold mb-1"><i class="fas fa-book me-2"></i>Cara Mendapatkan Custom Domain</h6>
+                        <p class="text-muted small mb-4">Ikuti langkah berikut untuk menghubungkan domain sendiri ke platform Anda.</p>
+
+                        <div class="d-flex flex-column gap-3">
+                            <div class="p-3 rounded-4" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)">
+                                <div class="d-flex gap-3">
+                                    <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold text-white" style="width:32px;height:32px;background:var(--primary-color);font-size:.8rem;flex-shrink:0">1</div>
+                                    <div>
+                                        <div class="fw-bold text-white small mb-1">Beli atau siapkan domain Anda</div>
+                                        <div class="text-muted" style="font-size:.82rem">Contoh: <code>lpk-anda.com</code> atau <code>belajar.lpk-anda.com</code></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="p-3 rounded-4" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)">
+                                <div class="d-flex gap-3">
+                                    <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold text-white" style="width:32px;height:32px;background:var(--primary-color);font-size:.8rem;flex-shrink:0">2</div>
+                                    <div>
+                                        <div class="fw-bold text-white small mb-1">Hubungi administrator platform</div>
+                                        <div class="text-muted" style="font-size:.82rem">Berikan nama domain Anda kepada admin agar didaftarkan ke sistem dan server.</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="p-3 rounded-4" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)">
+                                <div class="d-flex gap-3">
+                                    <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold text-white" style="width:32px;height:32px;background:var(--primary-color);font-size:.8rem;flex-shrink:0">3</div>
+                                    <div>
+                                        <div class="fw-bold text-white small mb-1">Arahkan DNS domain ke server</div>
+                                        <div class="text-muted mb-2" style="font-size:.82rem">Buka panel DNS domain Anda dan tambahkan salah satu record berikut:</div>
+                                        <div class="p-2 rounded-3" style="background:rgba(0,0,0,.3);font-family:monospace;font-size:.78rem;color:#94A3B8">
+                                            <div class="mb-1"><span style="color:#F59E0B">Jika pakai root domain</span> (<code>lpk-anda.com</code>):</div>
+                                            <div style="color:#10B981">A @ 76.76.21.21</div>
+                                            <div class="mt-2 mb-1"><span style="color:#F59E0B">Jika pakai subdomain</span> (<code>belajar.lpk-anda.com</code>):</div>
+                                            <div style="color:#10B981">CNAME belajar cname.vercel-dns.com</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <?php endif; ?>
+                </div>
+
                 <!-- Tab: Keamanan -->
                 <div class="<?= $active_tab==='password'?'d-block':'d-none' ?>" id="tab-password">
                     <div class="modern-card p-4" style="max-width:480px">
@@ -369,6 +520,17 @@ $active_tab = $_GET['tab'] ?? 'info';
     </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(() => {
+        const toast = document.createElement('div');
+        toast.textContent = '✓ URL disalin!';
+        toast.style.cssText = 'position:fixed;bottom:1.5rem;right:1.5rem;background:#10B981;color:#fff;padding:.6rem 1.2rem;border-radius:8px;font-size:.85rem;font-weight:600;z-index:9999;box-shadow:0 4px 15px rgba(16,185,129,.4);animation:fadeIn .2s ease';
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 2500);
+    });
+}
+</script>
 <script>
 // Sync color picker ↔ hex input + live preview
 function syncColor(pickerId, hexId) {
