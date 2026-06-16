@@ -22,8 +22,8 @@ $packages = $pdo_global->query("SELECT * FROM packages WHERE status='aktif' ORDE
 
 <!-- App Splash Screen (Loading) -->
 <div id="app-splash-screen" style="position:fixed;top:0;left:0;right:0;bottom:0;background-color:#0F172A;z-index:99999;display:flex;justify-content:center;align-items:center;transition:opacity 0.5s ease-out;">
-    <div style="text-align:center; animation: pulse 1.5s infinite;">
-        <img src="assets/logo/logolpk.png" alt="Loading Logo" style="width:120px;height:120px;object-fit:contain;margin-bottom:1rem;">
+    <div style="text-align:center; animation: pulse 1.5s infinite; width: 100%;">
+        <img src="assets/logo/logolpk.png" alt="Loading Logo" style="max-width:80%; max-height:150px; object-fit:contain; margin-bottom:1rem;">
         <style>@keyframes pulse { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.05); opacity: 0.8; } 100% { transform: scale(1); opacity: 1; } }</style>
     </div>
 </div>
