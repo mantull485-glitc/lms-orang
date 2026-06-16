@@ -94,6 +94,8 @@ if (file_exists($realPath) && is_file($realPath)) {
             'gif'  => 'image/gif',
             'svg'  => 'image/svg+xml',
             'ico'  => 'image/x-icon',
+            'json' => 'application/json',
+            'webmanifest' => 'application/manifest+json'
         ];
         $ext = strtolower(pathinfo($realPath, PATHINFO_EXTENSION));
         if (isset($mime_types[$ext])) {
