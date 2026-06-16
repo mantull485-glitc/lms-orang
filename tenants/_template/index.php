@@ -29,9 +29,28 @@ $recent_classes = $stmt->fetchAll();
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <!-- AOS Animation -->
     <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    
+    <!-- PWA Setup -->
+    <link rel="manifest" href="manifest.php">
+    <meta name="theme-color" content="#3B82F6">
+    <link rel="apple-touch-icon" href="assets/img/logo-192.png">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    
     <?php outputBrandingCSS($brand); ?>
 </head>
 <body class="dark-theme">
+
+<!-- PWA Service Worker Registration -->
+<script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('sw.js')
+                .then(reg => console.log('Service Worker Registered'))
+                .catch(err => console.log('Service Worker Registration Failed:', err));
+        });
+    }
+</script>
 
 <!-- Navbar -->
 <nav class="navbar navbar-expand-lg navbar-dark fixed-top">

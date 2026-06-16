@@ -10,8 +10,26 @@ $packages = $pdo_global->query("SELECT * FROM packages WHERE status='aktif' ORDE
     <title>Platform LPK — Kelola Pelatihan Lebih Mudah</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="assets/css/sales.css">
+    
+    <!-- PWA Setup -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#FF6A00">
+    <link rel="apple-touch-icon" href="assets/img/logo-192.png">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 </head>
 <body>
+
+<!-- PWA Service Worker Registration -->
+<script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('sw.js')
+                .then(reg => console.log('Platform SW Registered'))
+                .catch(err => console.log('Platform SW Registration Failed:', err));
+        });
+    }
+</script>
 
 <!-- NAVBAR -->
 <nav class="sales-nav">
