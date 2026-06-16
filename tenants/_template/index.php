@@ -41,6 +41,27 @@ $recent_classes = $stmt->fetchAll();
 </head>
 <body class="dark-theme">
 
+<!-- App Splash Screen (Loading) -->
+<div id="app-splash-screen" style="position:fixed;top:0;left:0;right:0;bottom:0;background-color:#0F172A;z-index:99999;display:flex;justify-content:center;align-items:center;transition:opacity 0.5s ease-out;">
+    <div style="text-align:center; animation: pulse 1.5s infinite;">
+        <!-- Gunakan logo fallback atau logo tenant -->
+        <img src="/assets/logo/logolpk.png" alt="Loading Logo" style="width:120px;height:120px;object-fit:contain;margin-bottom:1rem;">
+        <style>@keyframes pulse { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.05); opacity: 0.8; } 100% { transform: scale(1); opacity: 1; } }</style>
+    </div>
+</div>
+
+<script>
+    window.addEventListener('load', () => {
+        setTimeout(() => {
+            const splash = document.getElementById('app-splash-screen');
+            if (splash) {
+                splash.style.opacity = '0';
+                setTimeout(() => splash.remove(), 500); 
+            }
+        }, 800); 
+    });
+</script>
+
 <!-- PWA Service Worker Registration -->
 <script>
     if ('serviceWorker' in navigator) {
