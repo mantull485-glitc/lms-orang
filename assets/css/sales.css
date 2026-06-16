@@ -31,6 +31,7 @@ body {
     background: rgba(15,23,42,.85); backdrop-filter: blur(16px);
     border-bottom: 1px solid var(--border);
     padding: .85rem 0;
+    padding-top: calc(.85rem + env(safe-area-inset-top));
 }
 .sales-nav .container { display: flex; align-items: center; justify-content: space-between; }
 .nav-brand { font-size: 1.2rem; font-weight: 800; color: #fff; text-decoration: none; }
