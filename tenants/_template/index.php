@@ -31,9 +31,9 @@ $recent_classes = $stmt->fetchAll();
     <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
     
     <!-- PWA Setup -->
-    <link rel="manifest" href="manifest.php">
+    <link rel="manifest" href="manifest.php?v=<?= time() ?>">
     <meta name="theme-color" content="#0F172A">
-    <link rel="apple-touch-icon" href="/assets/logo/logolpk.png">
+    <link rel="apple-touch-icon" href="/assets/logo/logolpk.png?v=2">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     

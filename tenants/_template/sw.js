@@ -1,4 +1,4 @@
-const CACHE_NAME = 'lms-tenant-v1';
+const CACHE_NAME = 'lms-tenant-v2';
 
 // Install event: cache core assets if needed
 self.addEventListener('install', (event) => {

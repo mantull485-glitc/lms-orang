@@ -1,4 +1,4 @@
-const CACHE_NAME = 'platform-sales-v1';
+const CACHE_NAME = 'platform-sales-v2';
 
 self.addEventListener('install', (event) => {
     self.skipWaiting();

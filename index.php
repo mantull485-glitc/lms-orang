@@ -12,9 +12,9 @@ $packages = $pdo_global->query("SELECT * FROM packages WHERE status='aktif' ORDE
     <link rel="stylesheet" href="assets/css/sales.css">
     
     <!-- PWA Setup -->
-    <link rel="manifest" href="manifest.json">
+    <link rel="manifest" href="manifest.json?v=2">
     <meta name="theme-color" content="#0F172A">
-    <link rel="apple-touch-icon" href="assets/logo/logolpk.png">
+    <link rel="apple-touch-icon" href="assets/logo/logolpk.png?v=2">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 </head>
