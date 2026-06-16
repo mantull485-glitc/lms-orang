@@ -19,7 +19,7 @@ $recent_classes = $stmt->fetchAll();
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title><?= htmlspecialchars($nama) ?> - <?= htmlspecialchars($tagline) ?></title>
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -32,7 +32,7 @@ $recent_classes = $stmt->fetchAll();
     
     <!-- PWA Setup -->
     <link rel="manifest" href="manifest.php">
-    <meta name="theme-color" content="#3B82F6">
+    <meta name="theme-color" content="#0F172A">
     <link rel="apple-touch-icon" href="assets/img/logo-192.png">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
