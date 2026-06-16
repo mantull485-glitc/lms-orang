@@ -17,7 +17,7 @@ if (isset($_SERVER['TENANT_SUBDOMAIN']) || !empty($_SERVER['HTTP_HOST'])) {
     $base_url = './';
 }
 
-$icon_src = "assets/img/logo-192.png"; // Fallback
+$icon_src = "/assets/logo/logolpk.png"; // Fallback to root logo
 if ($logo && file_exists(__DIR__ . '/assets/img/' . $logo)) {
     // Ideally we resize this, but for now just use the logo
     $icon_src = "assets/img/" . $logo;
