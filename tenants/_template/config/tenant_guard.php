@@ -86,6 +86,15 @@ if ($tenant_info && $tenant_info['status'] === 'aktif' && !empty($tenant_info['c
         header("Location: " . $redirect_url);
         exit;
     }
+} else if ($tenant_info && $tenant_info['status'] === 'aktif') {
+    // FORCE REDIRECT: Jika tidak ada custom domain, pastikan URL punya trailing slash
+    // agar relative path (assets/css/style.css) tidak resolve ke /tenants/assets/... yang berujung 404
+    $request_path = parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH);
+    if ($request_path === "/tenants/$subdomain") {
+        header("HTTP/1.1 301 Moved Permanently");
+        header("Location: /tenants/$subdomain/");
+        exit;
+    }
 }
 
 if (!$tenant_info || $tenant_info['status'] !== 'aktif') {
