@@ -97,7 +97,7 @@ body.mesh-bg {
 }
 
 /* ── MESH BG ── */
-.mesh-bg { min-height: 100vh; position: relative; }
+.mesh-bg { min-height: 100dvh; position: relative; }
 
 /* ── BUTTONS ── */
 .btn-primary {
@@ -242,13 +242,13 @@ body.dark-theme .table > :not(caption) > * > * {
 
 /* ── HERO SECTION ── */
 .hero-section {
-    min-height: 100vh; display: flex; align-items: center;
+    min-height: 100dvh; display: flex; align-items: center;
     background: var(--navy); position: relative; overflow: hidden;
 }
 
 /* ── AUTH PAGES ── */
 .auth-container {
-    min-height: 100vh; display: flex;
+    min-height: 100dvh; display: flex;
     align-items: center; justify-content: center;
     background: var(--navy); padding: 2rem;
 }
@@ -275,14 +275,14 @@ body.dark-theme .table > :not(caption) > * > * {
 }
 
 /* ── ADMIN LAYOUT ── */
-.admin-wrapper { display: flex; min-height: 100vh; }
+.admin-wrapper { display: flex; min-height: 100dvh; }
 
 /* ── ADMIN SIDEBAR ── */
 .admin-sidebar {
     width: var(--sidebar-w);
     background: var(--navy-light);
     border-right: 1px solid var(--border);
-    position: fixed; height: 100vh;
+    position: fixed; height: 100dvh;
     left: 0; top: 0; z-index: 1030;
     transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
     overflow-y: auto; overflow-x: hidden;
@@ -329,7 +329,7 @@ body.dark-theme .table > :not(caption) > * > * {
 /* ── ADMIN CONTENT ── */
 .admin-content {
     flex: 1; margin-left: var(--sidebar-w);
-    padding: 2rem; min-height: 100vh;
+    padding: 2rem; min-height: 100dvh;
     background: var(--navy);
 }
 body.dark-theme .admin-content { background: var(--navy); }
@@ -464,6 +464,14 @@ body.sidebar-is-open { overflow: hidden; }
 ═══════════════════════════════════════════ */
 @media (max-width: 575.98px) {
     body { font-size: .94rem; }
+    
+    /* iOS Safari Fixes */
+    input[type="text"], input[type="email"], input[type="password"], input[type="number"], select, textarea {
+        font-size: 16px !important; /* Prevents auto-zoom on iOS */
+        -webkit-appearance: none;   /* Fixes native styling overriding */
+        border-radius: 12px;
+    }
+    .btn { -webkit-appearance: none; }
 
     .admin-content {
         padding: .875rem !important;
