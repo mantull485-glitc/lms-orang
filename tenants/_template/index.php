@@ -153,8 +153,8 @@ $recent_classes = $stmt->fetchAll();
 <section class="hero-section text-center mesh-bg py-5 position-relative">
     <!-- Glow Effects -->
     <div class="glow-container">
-        <div class="glow-blob" style="background: var(--primary-color); width: 400px; height: 400px; top: -100px; right: -100px;"></div>
-        <div class="glow-blob" style="background: var(--secondary-color); width: 500px; height: 500px; bottom: -200px; left: -150px; animation-delay: -5s;"></div>
+        <div class="glow-blob" style="background: radial-gradient(circle, rgba(var(--bs-primary-rgb), 0.8) 0%, rgba(var(--bs-primary-rgb), 0) 70%); width: 400px; height: 400px; top: -100px; right: -100px;"></div>
+        <div class="glow-blob" style="background: radial-gradient(circle, var(--secondary-color) 0%, transparent 70%); width: 500px; height: 500px; bottom: -200px; left: -150px; animation-delay: -5s;"></div>
     </div>
     <div class="container hero-content py-5 position-relative" style="z-index: 2;">
         <div class="reveal-on-scroll">

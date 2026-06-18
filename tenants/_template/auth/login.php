@@ -71,8 +71,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <div class="auth-container mesh-bg position-relative overflow-hidden">
     <!-- Glow Effects -->
     <div class="glow-container">
-        <div class="glow-blob" style="background: var(--primary-color); width: 400px; height: 400px; top: -100px; right: -100px;"></div>
-        <div class="glow-blob" style="background: var(--secondary-color); width: 500px; height: 500px; bottom: -200px; left: -150px; animation-delay: -5s;"></div>
+        <div class="glow-blob" style="background: radial-gradient(circle, rgba(var(--bs-primary-rgb), 0.8) 0%, rgba(var(--bs-primary-rgb), 0) 70%); width: 400px; height: 400px; top: -100px; right: -100px;"></div>
+        <div class="glow-blob" style="background: radial-gradient(circle, var(--secondary-color) 0%, transparent 70%); width: 500px; height: 500px; bottom: -200px; left: -150px; animation-delay: -5s;"></div>
     </div>
 
     <div class="container position-relative z-index-2">

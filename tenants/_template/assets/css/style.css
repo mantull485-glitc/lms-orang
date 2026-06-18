@@ -49,8 +49,8 @@ body.dark-theme { background: var(--navy); color: var(--text); }
 body.mesh-bg {
     background: var(--navy);
     background-image:
-        radial-gradient(ellipse at 5% 0%, rgba(255,106,0,0.05) 0%, transparent 50%),
-        radial-gradient(ellipse at 95% 100%, rgba(0,210,255,0.04) 0%, transparent 50%);
+        radial-gradient(ellipse at 5% 0%, rgba(255,106,0,0.05) 0%, rgba(255,106,0,0) 50%),
+        radial-gradient(ellipse at 95% 100%, rgba(0,210,255,0.04) 0%, rgba(0,210,255,0) 50%);
 }
 
 /* ── SCROLLBAR ── */
@@ -87,7 +87,7 @@ body.mesh-bg {
 }
 .glow-blob {
     position: absolute; border-radius: 50%;
-    filter: blur(100px); opacity: 0.5;
+    opacity: 0.5;
     mix-blend-mode: screen;
     animation: blobFloat 12s ease-in-out infinite alternate;
 }
@@ -593,10 +593,8 @@ footer {
     padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
-/* 5. Fix backdrop-filter rendering on iOS (forces GPU layer) */
-.navbar, .mobile-topbar, .navbar-collapse,
-.admin-sidebar, .glass-panel, .modern-card,
-.auth-card-modern, #floating-loader {
+/* 5. Fix backdrop-filter rendering on iOS (forces GPU layer for specific cards) */
+.glass-panel, .modern-card, .auth-card-modern {
     -webkit-transform: translateZ(0);
     transform: translateZ(0);
 }
