@@ -20,23 +20,55 @@ $packages = $pdo_global->query("SELECT * FROM packages WHERE status='aktif' ORDE
 </head>
 <body>
 
-<!-- App Splash Screen (Loading) -->
-<div id="app-splash-screen" style="position:fixed;top:0;left:0;right:0;bottom:0;background-color:#0F172A;z-index:99999;display:flex;justify-content:center;align-items:center;transition:opacity 0.3s ease-out;">
-    <div style="text-align:center; width: 100%;">
-        <img src="assets/logo/logolpk.png" alt="Loading Logo" style="max-width:80%; max-height:150px; object-fit:contain; margin-bottom:1rem;">
-    </div>
+<!-- Floating Spinner Loading -->
+<div id="floating-loader">
+    <div class="spinner-ring"></div>
 </div>
+<style>
+    #floating-loader {
+        position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+        z-index: 999999; display: flex; justify-content: center; align-items: center;
+        width: 64px; height: 64px;
+        background: rgba(11, 17, 32, 0.75); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+        border-radius: 20px; border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5), 0 0 20px rgba(255,106,0,0.15);
+        opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+    }
+    .spinner-ring {
+        width: 32px; height: 32px;
+        border: 3px solid rgba(255, 106, 0, 0.2); border-top-color: #FF6A00;
+        border-radius: 50%; animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+</style>
 
 <script>
-    // Hilangkan splash screen setelah halaman selesai dimuat (atau minimal 1 detik)
-    window.addEventListener('load', () => {
-        setTimeout(() => {
-            const splash = document.getElementById('app-splash-screen');
-            if (splash) {
-                splash.style.opacity = '0';
-                setTimeout(() => splash.remove(), 500); // Hapus elemen setelah transisi selesai
-            }
-        }, 800); // Tahan splash screen selama 800ms agar terasa seperti native app
+    document.addEventListener('DOMContentLoaded', () => {
+        const loader = document.getElementById('floating-loader');
+        
+        // Munculkan saat pertama load halaman
+        loader.style.opacity = '1';
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                loader.style.opacity = '0';
+            }, 300);
+        });
+
+        // Animasi saat klik link pindah halaman
+        document.querySelectorAll('a').forEach(a => {
+            a.addEventListener('click', e => {
+                const href = a.getAttribute('href');
+                if (href && !href.startsWith('#') && !href.startsWith('javascript:') && a.target !== '_blank') {
+                    e.preventDefault();
+                    if (loader) {
+                        loader.style.opacity = '1';
+                        setTimeout(() => window.location.href = href, 300);
+                    } else {
+                        window.location.href = href;
+                    }
+                }
+            });
+        });
     });
 </script>
 
@@ -52,7 +84,7 @@ $packages = $pdo_global->query("SELECT * FROM packages WHERE status='aktif' ORDE
 </script>
 
 <!-- NAVBAR -->
-<nav class="sales-nav">
+<nav class="sales-nav" id="salesNav">
     <div class="container">
         <a class="nav-brand" href="#">Platform<span>.</span>LPK</a>
         <ul class="nav-links">
@@ -60,17 +92,34 @@ $packages = $pdo_global->query("SELECT * FROM packages WHERE status='aktif' ORDE
             <li><a href="#cara-kerja">Cara Kerja</a></li>
             <li><a href="#harga">Harga</a></li>
         </ul>
-        <div class="d-flex gap-2">
-            <a href="auth/superadmin_login.php" class="btn-outline-sales" style="padding:.45rem 1rem;font-size:.85rem">Login</a>
+        <div class="nav-actions">
+            <a href="auth/superadmin_login.php" class="btn-nav-outline">Login</a>
             <a href="pricing.php" class="btn-nav">Mulai Sekarang</a>
+            <button class="nav-hamburger" id="navHamburger" aria-label="Menu" onclick="toggleMobileNav()">
+                <span></span><span></span><span></span>
+            </button>
         </div>
     </div>
 </nav>
+<!-- Mobile Nav Drawer -->
+<div class="nav-mobile-drawer" id="navMobileDrawer">
+    <ul>
+        <li><a href="#fitur" onclick="closeMobileNav()">Fitur</a></li>
+        <li><a href="#cara-kerja" onclick="closeMobileNav()">Cara Kerja</a></li>
+        <li><a href="#harga" onclick="closeMobileNav()">Harga</a></li>
+    </ul>
+    <div class="mobile-nav-cta">
+        <a href="auth/superadmin_login.php" class="btn-nav-outline" style="padding:.65rem 1rem">Login</a>
+        <a href="pricing.php" class="btn-nav" style="padding:.65rem 1rem">Mulai Sekarang</a>
+    </div>
+</div>
 
 <!-- HERO -->
 <section class="hero">
     <div class="hero-bg"></div>
     <div class="hero-grid"></div>
+    <div class="hero-orb hero-orb-1"></div>
+    <div class="hero-orb hero-orb-2"></div>
     <div class="container hero-content">
         <div class="row align-items-center g-5">
             <div class="col-lg-6">
@@ -98,7 +147,7 @@ $packages = $pdo_global->query("SELECT * FROM packages WHERE status='aktif' ORDE
             </div>
             <div class="col-lg-6 d-none d-lg-block">
                 <!-- Dashboard Preview Card -->
-                <div style="background:var(--navy-light);border:1px solid var(--border);border-radius:20px;padding:1.5rem;box-shadow:0 20px 60px rgba(0,0,0,.5)">
+                <div class="hero-preview-wrap"><div class="hero-preview">
                     <div style="display:flex;gap:6px;margin-bottom:1rem">
                         <span style="width:10px;height:10px;border-radius:50%;background:#EF4444;display:block"></span>
                         <span style="width:10px;height:10px;border-radius:50%;background:#F59E0B;display:block"></span>
@@ -133,7 +182,7 @@ $packages = $pdo_global->query("SELECT * FROM packages WHERE status='aktif' ORDE
                         </div>
                         <?php endforeach; ?>
                     </div>
-                </div>
+                </div></div>
             </div>
         </div>
     </div>
@@ -157,10 +206,10 @@ $packages = $pdo_global->query("SELECT * FROM packages WHERE status='aktif' ORDE
                 ['📹', 'Integrasi Zoom', 'Link Zoom kelas terintegrasi langsung di platform. Siswa akses dari dashboard mereka sendiri.', 'rgba(245,158,11,.1)', '#F59E0B'],
                 ['📊', 'Laporan Keuangan', 'Laporan pendapatan dan keuangan lengkap. Pantau performa finansial LPK Anda secara real-time.', 'rgba(239,68,68,.1)', '#EF4444'],
             ];
-            foreach ($features as [$icon, $title, $desc, $bg, $color]):
+            foreach ($features as $i => [$icon, $title, $desc, $bg, $color]):
             ?>
             <div class="col-md-6 col-lg-4">
-                <div class="feature-card">
+                <div class="feature-card reveal reveal-delay-<?= ($i % 3) + 1 ?>">
                     <div class="feature-icon" style="background:<?= $bg ?>;font-size:1.5rem"><?= $icon ?></div>
                     <div class="feature-title"><?= $title ?></div>
                     <div class="feature-desc"><?= $desc ?></div>
@@ -185,13 +234,13 @@ $packages = $pdo_global->query("SELECT * FROM packages WHERE status='aktif' ORDE
                 ['2', 'Aktivasi Instan', 'Tim kami memverifikasi pembayaran dan mengaktifkan platform Anda dalam 1x24 jam.'],
                 ['3', 'Langsung Pakai', 'Login ke panel admin Anda dan mulai tambahkan kelas, siswa, dan kelola pelatihan.'],
             ];
-            foreach ($steps as [$num, $title, $desc]):
+            foreach ($steps as $i => [$num, $title, $desc]):
             ?>
             <div class="col-md-4">
-                <div style="text-align:center;padding:1.5rem">
+                <div class="text-center p-4 reveal reveal-delay-<?= $i + 1 ?>">
                     <div class="step-num mx-auto mb-3"><?= $num ?></div>
                     <h5 style="color:#fff;font-weight:700;margin-bottom:.5rem"><?= $title ?></h5>
-                    <p style="color:var(--text-muted);font-size:.9rem;line-height:1.6"><?= $desc ?></p>
+                    <p style="color:var(--text-muted);font-size:.9rem;line-height:1.65"><?= $desc ?></p>
                 </div>
             </div>
             <?php endforeach; ?>
@@ -246,11 +295,12 @@ $packages = $pdo_global->query("SELECT * FROM packages WHERE status='aktif' ORDE
 <!-- CTA -->
 <section>
     <div class="container">
-        <div style="background:linear-gradient(135deg,rgba(255,106,0,.15),rgba(0,210,255,.08));border:1px solid rgba(255,106,0,.2);border-radius:24px;padding:4rem 2rem;text-align:center">
-            <h2 style="font-size:2rem;font-weight:800;color:#fff;margin-bottom:1rem">Siap Digitalisasi LPK Anda?</h2>
-            <p style="color:var(--text-muted);margin-bottom:2rem;max-width:480px;margin-left:auto;margin-right:auto">Bergabung dengan ratusan LPK yang sudah menggunakan platform kami. Aktivasi cepat, support responsif.</p>
-            <a href="pricing.php" class="btn-primary-sales" style="font-size:1.1rem;padding:1rem 2.5rem">
-                Mulai Sekarang — Gratis Konsultasi
+        <div class="cta-box reveal">
+            <h2 style="font-size:clamp(1.6rem,3vw,2.2rem);font-weight:900;color:#fff;margin-bottom:1rem;letter-spacing:-.5px">Siap Digitalisasi LPK Anda?</h2>
+            <p style="color:var(--text-muted);margin-bottom:2rem;max-width:480px;margin-left:auto;margin-right:auto;line-height:1.7">Bergabung dengan ratusan LPK yang sudah menggunakan platform kami. Aktivasi cepat, support responsif.</p>
+            <a href="pricing.php" class="btn-primary-sales" style="font-size:1rem;padding:.9rem 2.5rem">
+                Mulai Sekarang &mdash; Gratis Konsultasi
+                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
             </a>
         </div>
     </div>
@@ -297,6 +347,33 @@ document.querySelectorAll('a[href^="#"]').forEach(a => {
         if (el) el.scrollIntoView({ behavior: 'smooth' });
     });
 });
+
+// Navbar scroll effect
+const salesNav = document.getElementById('salesNav');
+window.addEventListener('scroll', () => {
+    salesNav.classList.toggle('scrolled', window.scrollY > 20);
+});
+
+// Mobile nav toggle
+function toggleMobileNav() {
+    const drawer = document.getElementById('navMobileDrawer');
+    const btn = document.getElementById('navHamburger');
+    const isOpen = drawer.classList.toggle('open');
+    btn.classList.toggle('open', isOpen);
+    document.body.style.overflow = isOpen ? 'hidden' : '';
+}
+function closeMobileNav() {
+    document.getElementById('navMobileDrawer').classList.remove('open');
+    document.getElementById('navHamburger').classList.remove('open');
+    document.body.style.overflow = '';
+}
+
+// Scroll reveal
+const revealEls = document.querySelectorAll('.reveal');
+const revealObs = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); } });
+}, { threshold: 0.12 });
+revealEls.forEach(el => revealObs.observe(el));
 </script>
 </body>
 </html>

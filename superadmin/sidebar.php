@@ -1,5 +1,4 @@
 <?php
-// Tentukan halaman aktif
 $current_page = basename($_SERVER['PHP_SELF']);
 function sa_active(string $page): string {
     global $current_page;
@@ -9,10 +8,9 @@ function sa_active(string $page): string {
 <aside class="sa-sidebar" id="saSidebar">
     <div class="sa-sidebar-brand">
         <div class="sa-brand-logo">
-            <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-                <rect width="28" height="28" rx="8" fill="#FF6A00" fill-opacity=".15"/>
-                <path d="M7 14l5 5 9-9" stroke="#FF6A00" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
+            <div class="brand-icon">
+                <svg fill="none" stroke="#FF6A00" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M7 14l5 5 9-9"/></svg>
+            </div>
             Platform<span class="dot">.</span>Admin
         </div>
         <div class="sa-brand-sub">Super Administrator</div>
@@ -25,7 +23,7 @@ function sa_active(string $page): string {
             Dashboard
         </a>
 
-        <div class="sa-nav-label" style="margin-top:.5rem">Manajemen</div>
+        <div class="sa-nav-label">Manajemen</div>
         <a href="tenants.php" class="<?= sa_active('tenants.php') ?>">
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
             Tenant / LPK
@@ -39,7 +37,7 @@ function sa_active(string $page): string {
             Semua Order
         </a>
 
-        <div class="sa-nav-label" style="margin-top:.5rem">Keuangan</div>
+        <div class="sa-nav-label">Keuangan</div>
         <a href="finance.php" class="<?= sa_active('finance.php') ?>">
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
             Verifikasi Bayar
@@ -49,24 +47,27 @@ function sa_active(string $page): string {
             Laporan &amp; Analitik
         </a>
 
-        <div class="sa-nav-label" style="margin-top:.5rem">Sistem</div>
+        <div class="sa-nav-label">Sistem</div>
         <a href="settings.php" class="<?= sa_active('settings.php') ?>">
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
             Pengaturan Akun
         </a>
-        <a href="migrate_tenants.php" class="<?= sa_active('migrate_tenants.php') ?>" title="Patch kolom yang kurang di database tenant lama">
+        <a href="migrate_tenants.php" class="<?= sa_active('migrate_tenants.php') ?>">
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"/></svg>
             Migrasi DB Tenant
         </a>
     </nav>
 
     <div class="sa-sidebar-footer">
-        <div style="color:var(--text-sub);font-size:.8rem">
-            Login sebagai<br>
-            <strong style="color:var(--text)"><?= htmlspecialchars($_SESSION['superadmin_nama'] ?? 'Super Admin') ?></strong>
+        <div class="sa-user-card">
+            <div class="sa-user-avatar"><?= strtoupper(substr($_SESSION['superadmin_nama'] ?? 'S', 0, 1)) ?></div>
+            <div>
+                <div class="sa-user-name"><?= htmlspecialchars($_SESSION['superadmin_nama'] ?? 'Super Admin') ?></div>
+                <div class="sa-user-role">Super Administrator</div>
+            </div>
         </div>
-        <a href="../auth/superadmin_logout.php" style="display:inline-flex;align-items:center;gap:5px;margin-top:.7rem;color:#EF4444;font-size:.8rem;text-decoration:none">
-            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+        <a href="../auth/superadmin_logout.php" class="sa-logout-link">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
             Logout
         </a>
     </div>
@@ -85,16 +86,16 @@ function sa_active(string $page): string {
     <div class="sa-mobile-brand">
         Platform<span class="dot">.</span>Admin
     </div>
-    <div class="sa-avatar" style="width:32px;height:32px;font-size:.8rem;cursor:default">
+    <div class="sa-avatar" style="cursor:default">
         <?= strtoupper(substr($_SESSION['superadmin_nama'] ?? 'S', 0, 1)) ?>
     </div>
 </div>
 
 <script>
 function saToggleSidebar() {
-    var sidebar  = document.getElementById('saSidebar');
-    var overlay  = document.getElementById('saOverlay');
-    var isOpen   = sidebar.classList.toggle('open');
+    var sidebar = document.getElementById('saSidebar');
+    var overlay = document.getElementById('saOverlay');
+    var isOpen  = sidebar.classList.toggle('open');
     overlay.classList.toggle('show', isOpen);
     document.body.style.overflow = isOpen ? 'hidden' : '';
 }
@@ -103,7 +104,6 @@ function saCloseSidebar() {
     document.getElementById('saOverlay').classList.remove('show');
     document.body.style.overflow = '';
 }
-// Auto-close on nav click (mobile)
 document.querySelectorAll('.sa-nav a').forEach(function(link) {
     link.addEventListener('click', function() {
         if (window.innerWidth <= 768) saCloseSidebar();

@@ -84,6 +84,53 @@ $all_packages = $pdo_global->query("SELECT * FROM packages WHERE status='aktif' 
     <link rel="stylesheet" href="assets/css/sales.css">
 </head>
 <body>
+<!-- Floating Spinner Loading -->
+<div id="floating-loader">
+    <div class="spinner-ring"></div>
+</div>
+<style>
+    #floating-loader { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 999999; display: flex; justify-content: center; align-items: center; width: 64px; height: 64px; background: rgba(11, 17, 32, 0.75); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-radius: 20px; border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 10px 30px rgba(0,0,0,0.5), 0 0 20px rgba(255,106,0,0.15); opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
+    .spinner-ring { width: 32px; height: 32px; border: 3px solid rgba(255, 106, 0, 0.2); border-top-color: #FF6A00; border-radius: 50%; animation: spin 0.8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const loader = document.getElementById('floating-loader');
+        
+        // Load in
+        loader.style.opacity = '1';
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                loader.style.opacity = '0';
+            }, 300);
+        });
+
+        // Link click out
+        document.querySelectorAll('a').forEach(a => {
+            a.addEventListener('click', e => {
+                const href = a.getAttribute('href');
+                if (href && !href.startsWith('#') && !href.startsWith('javascript:') && a.target !== '_blank') {
+                    e.preventDefault();
+                    if (loader) {
+                        loader.style.opacity = '1';
+                        setTimeout(() => window.location.href = href, 300);
+                    } else {
+                        window.location.href = href;
+                    }
+                }
+            });
+        });
+
+        // Form submit
+        const form = document.querySelector('form');
+        if (form) {
+            form.addEventListener('submit', () => {
+                if (loader) loader.style.opacity = '1';
+            });
+        }
+    });
+</script>
+
 <!-- NAVBAR -->
 <nav class="sales-nav">
     <div class="container">
