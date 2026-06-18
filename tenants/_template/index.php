@@ -93,13 +93,13 @@ $recent_classes = $stmt->fetchAll();
     });
 </script>
 
-<!-- PWA Service Worker Registration -->
+<!-- Unregister broken PWA Service Worker to fix iOS Safari CSS bug -->
 <script>
     if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('sw.js')
-                .then(reg => console.log('Service Worker Registered'))
-                .catch(err => console.log('Service Worker Registration Failed:', err));
+        navigator.serviceWorker.getRegistrations().then(function(registrations) {
+            for(let registration of registrations) {
+                registration.unregister();
+            }
         });
     }
 </script>
