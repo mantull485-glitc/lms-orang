@@ -362,7 +362,8 @@ body.dark-theme .form-control-modern:focus { background: rgba(255,255,255,0.09);
 .mobile-topbar {
     display: none; position: fixed;
     top: 0; left: 0; right: 0;
-    height: var(--topbar-h);
+    height: calc(var(--topbar-h) + env(safe-area-inset-top, 0px));
+    padding-top: env(safe-area-inset-top, 0px);
     background: rgba(11,17,32,0.97);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
@@ -425,9 +426,24 @@ body.sidebar-is-open { overflow: hidden; }
     .admin-content {
         margin-left: 0 !important;
         padding: 1.25rem !important;
-        padding-top: calc(var(--topbar-h) + 1.25rem) !important;
+        padding-top: calc(var(--topbar-h) + env(safe-area-inset-top, 0px) + 1.25rem) !important;
     }
     .admin-wrapper { display: block; }
+
+    /* Tenant Landing Page Mobile Navbar */
+    .navbar-collapse {
+        background: rgba(11, 17, 32, 0.95);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border-radius: 14px;
+        padding: 1.2rem;
+        margin-top: 12px;
+        border: 1px solid var(--border);
+        box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+        text-align: center;
+    }
+    .navbar-collapse .nav-item { margin-bottom: 8px; }
+    .navbar-collapse .btn { width: 100%; margin-top: 8px; }
 
     /* Tables */
     .table-responsive { overflow-x: auto; -webkit-overflow-scrolling: touch; }
@@ -451,9 +467,9 @@ body.sidebar-is-open { overflow: hidden; }
 
     .admin-content {
         padding: .875rem !important;
-        padding-top: calc(var(--topbar-h) + .875rem) !important;
+        padding-top: calc(var(--topbar-h) + env(safe-area-inset-top, 0px) + .875rem) !important;
     }
-    .admin-sidebar-header { padding: 1.1rem 1rem !important; }
+    .admin-sidebar-header { padding: calc(env(safe-area-inset-top, 0px) + 1.1rem) 1rem 1.1rem !important; }
     .modern-card { border-radius: var(--radius); }
     .display-5, .display-6 { font-size: 1.5rem !important; }
 
