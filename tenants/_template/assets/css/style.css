@@ -485,7 +485,11 @@ body.sidebar-is-open { overflow: hidden; }
     .btn-primary, .btn-custom { padding: 8px 18px; font-size: .875rem; }
 
     /* Hero */
-    .hero-section { min-height: 88vh; padding-top: 70px !important; }
+    .hero-section { 
+        min-height: 88vh; min-height: 88dvh; 
+        padding-top: calc(80px + env(safe-area-inset-top, 0px)) !important; 
+        padding-bottom: calc(40px + env(safe-area-inset-bottom, 0px)) !important;
+    }
     .hero-section h1 { font-size: 1.8rem !important; line-height: 1.22; }
     .hero-section p  { font-size: .9rem !important; }
     .navbar-brand { font-size: 1.15rem; }
