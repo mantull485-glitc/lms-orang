@@ -556,3 +556,66 @@ body.sidebar-is-open { overflow: hidden; }
     .admin-content { padding: .5rem !important; padding-top: calc(var(--topbar-h) + .5rem) !important; }
     .fin-stat-value { font-size: 1rem; }
 }
+
+/* ═══════════════════════════════════════════
+   iOS SAFARI — GLOBAL FIXES
+   Requires viewport-fit=cover on ALL pages
+═══════════════════════════════════════════ */
+
+/* 1. Prevent elastic bounce scrolling on body leaking bg */
+html, body { overscroll-behavior: none; }
+
+/* 2. Remove blue tap highlight on all elements (iOS Safari) */
+* { -webkit-tap-highlight-color: transparent; }
+
+/* 3. Fix bottom padding for iPhone X+ home indicator bar */
+body {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Admin content: adjust bottom padding too */
+.admin-content {
+    padding-bottom: calc(2rem + env(safe-area-inset-bottom, 0px)) !important;
+}
+
+/* Footer: avoid being hidden behind iOS home indicator */
+footer {
+    padding-bottom: calc(1.5rem + env(safe-area-inset-bottom, 0px));
+}
+
+/* 4. Fix sidebar height to fill true iOS screen height (with notch+home bar) */
+.admin-sidebar {
+    height: 100dvh;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* 5. Fix backdrop-filter rendering on iOS (forces GPU layer) */
+.navbar, .mobile-topbar, .navbar-collapse,
+.admin-sidebar, .glass-panel, .modern-card,
+.auth-card-modern, #floating-loader {
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+}
+
+/* 6. Fix scrolling inside sidebar on iOS */
+.admin-sidebar {
+    -webkit-overflow-scrolling: touch;
+    overflow-y: auto;
+}
+
+/* 7. Fix input styling on iOS (prevents native override) */
+input, textarea, select, button {
+    -webkit-appearance: none;
+    appearance: none;
+}
+/* Exception: keep checkbox/radio native */
+input[type="checkbox"], input[type="radio"] {
+    -webkit-appearance: checkbox;
+    appearance: auto;
+}
+
+/* 8. Fix iOS font rendering */
+body {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+}
