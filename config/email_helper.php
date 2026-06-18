@@ -5,12 +5,23 @@
 // ============================================================
 
 function sendEmail(string $to, string $subject, string $html_body, string $from_name = 'Platform LPK', string $from_email = 'noreply@platform.com'): bool {
-    $headers  = "MIME-Version: 1.0\r\n";
-    $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
-    $headers .= "From: {$from_name} <{$from_email}>\r\n";
-    $headers .= "Reply-To: {$from_email}\r\n";
-    // Gunakan @ untuk menyembunyikan warning jika sendmail tidak tersedia (misal di Vercel Serverless)
-    return @mail($to, $subject, $html_body, $headers);
+    // Jalankan proses pengiriman email di background (Async)
+    // agar tidak membuat loading browser/webhook menjadi lambat.
+    register_shutdown_function(function() use ($to, $subject, $html_body, $from_name, $from_email) {
+        // Jika server mendukung FastCGI, tutup koneksi ke browser sekarang juga
+        // Browser akan menganggap proses sudah 100% selesai, padahal PHP masih lanjut mengirim email di belakang layar.
+        if (function_exists('fastcgi_finish_request')) {
+            fastcgi_finish_request();
+        }
+        
+        $headers  = "MIME-Version: 1.0\r\n";
+        $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
+        $headers .= "From: {$from_name} <{$from_email}>\r\n";
+        $headers .= "Reply-To: {$from_email}\r\n";
+        @mail($to, $subject, $html_body, $headers);
+    });
+
+    return true; // Langsung return true tanpa menunggu mail() selesai
 }
 
 function emailTemplate(string $title, string $body, string $cta_text = '', string $cta_url = ''): string {
