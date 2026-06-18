@@ -566,8 +566,7 @@ body.sidebar-is-open { overflow: hidden; }
    Requires viewport-fit=cover on ALL pages
 ═══════════════════════════════════════════ */
 
-/* 1. Prevent elastic bounce scrolling on body leaking bg */
-html, body { overscroll-behavior: none; }
+/* 1. Prevent elastic bounce scrolling on body leaking bg (Removed to prevent iOS scroll freeze) */
 
 /* 2. Remove blue tap highlight on all elements (iOS Safari) */
 * { -webkit-tap-highlight-color: transparent; }
