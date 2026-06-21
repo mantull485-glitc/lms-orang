@@ -76,7 +76,7 @@ $recent_regs = $stmt_recent->fetchAll();
                             </div>
                             <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-3 py-2">+2%</span>
                         </div>
-                        <h2 class="display-6 fw-bold mb-1 animate-count" style="color: var(--navy-color);" data-target="<?= $stats['users']; ?>">0</h2>
+                        <h2 class="display-6 fw-bold mb-1 animate-count text-white" data-target="<?= $stats['users']; ?>">0</h2>
                         <p class="text-muted small mb-0 fw-bold text-uppercase ls-2">Peserta Terdaftar</p>
                     </div>
                 </div>
@@ -87,7 +87,7 @@ $recent_regs = $stmt_recent->fetchAll();
                                 <i class="fas fa-graduation-cap text-primary fs-4"></i>
                             </div>
                         </div>
-                        <h2 class="display-5 fw-bold mb-1 animate-count" style="color: var(--navy-color);" data-target="<?= $stats['classes']; ?>">0</h2>
+                        <h2 class="display-5 fw-bold mb-1 animate-count text-white" data-target="<?= $stats['classes']; ?>">0</h2>
                         <p class="text-muted small mb-0 fw-bold text-uppercase ls-2">Katalog Kelas</p>
                     </div>
                 </div>
@@ -98,7 +98,7 @@ $recent_regs = $stmt_recent->fetchAll();
                                 <i class="fas fa-clock text-warning fs-4"></i>
                             </div>
                         </div>
-                        <h2 class="display-5 fw-bold mb-1 animate-count" style="color: var(--navy-color);" data-target="<?= $stats['pending_regs']; ?>">0</h2>
+                        <h2 class="display-5 fw-bold mb-1 animate-count text-white" data-target="<?= $stats['pending_regs']; ?>">0</h2>
                         <p class="text-muted small mb-0 fw-bold text-uppercase ls-2">Menunggu Review</p>
                     </div>
                 </div>
