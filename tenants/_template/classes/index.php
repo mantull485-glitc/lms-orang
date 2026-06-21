@@ -78,10 +78,14 @@ $classes = $stmt->fetchAll();
 
 <!-- Premium Header with Glow Effects -->
 <header class="mesh-bg text-white py-5 section-premium position-relative overflow-hidden">
-    <!-- Glow Effects -->
+    <!-- Premium Floating Objects -->
     <div class="glow-container">
-        <div class="glow-blob" style="background: var(--primary-color); width: 400px; height: 400px; top: -100px; right: 10%;"></div>
-        <div class="glow-blob" style="background: var(--secondary-color); width: 500px; height: 500px; bottom: -200px; left: -5%;"></div>
+        <div class="glow-blob" style="background: radial-gradient(circle, rgba(255,106,0, 0.8) 0%, transparent 70%); width: 500px; height: 500px; top: -100px; right: 10%;"></div>
+        <div class="glow-blob" style="background: radial-gradient(circle, rgba(0,210,255, 0.6) 0%, transparent 70%); width: 600px; height: 600px; bottom: -200px; left: -5%;"></div>
+        
+        <div class="floating-glass-1"></div>
+        <div class="floating-glass-2"></div>
+        <div class="floating-glass-3"></div>
     </div>
     <div class="container text-center position-relative z-index-2" data-aos="zoom-in" data-aos-duration="1000">
         <h1 class="display-4 fw-black mb-3 text-white" style="letter-spacing: -1px;">Katalog Kelas Populer</h1>

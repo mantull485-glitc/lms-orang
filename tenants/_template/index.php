@@ -153,16 +153,21 @@ $recent_classes = $stmt->fetchAll();
 <section class="hero-section text-center mesh-bg py-5 position-relative">
     <!-- Glow Effects -->
     <div class="glow-container">
-        <div class="glow-blob" style="background: radial-gradient(circle, rgba(var(--bs-primary-rgb), 0.8) 0%, rgba(var(--bs-primary-rgb), 0) 70%); width: 400px; height: 400px; top: -100px; right: -100px;"></div>
-        <div class="glow-blob" style="background: radial-gradient(circle, var(--secondary-color) 0%, transparent 70%); width: 500px; height: 500px; bottom: -200px; left: -150px; animation-delay: -5s;"></div>
+        <div class="glow-blob" style="background: radial-gradient(circle, rgba(255,106,0, 0.8) 0%, transparent 70%); width: 500px; height: 500px; top: -100px; right: -150px;"></div>
+        <div class="glow-blob" style="background: radial-gradient(circle, rgba(0,210,255, 0.6) 0%, transparent 70%); width: 600px; height: 600px; bottom: -200px; left: -200px; animation-delay: -5s;"></div>
+        
+        <!-- Premium Floating Objects -->
+        <div class="floating-glass-1"></div>
+        <div class="floating-glass-2"></div>
+        <div class="floating-glass-3"></div>
     </div>
     <div class="container hero-content py-5 position-relative" style="z-index: 2;">
         <div class="reveal-on-scroll">
             <h1 class="hero-title text-white mb-4" data-aos="fade-down" style="font-size: 3.5rem; font-weight: 800;">
                 Tingkatkan Karier Anda bersama <br>
-                <span class="text-warning"><?= htmlspecialchars($nama) ?></span>
+                <span class="text-gradient" style="font-size: 1.1em; line-height: 1.2; text-shadow: 0 0 40px rgba(255,106,0,0.5);"><?= htmlspecialchars($nama) ?></span>
             </h1>
-            <p class="hero-subtitle text-white opacity-75 mt-3 mb-5 mx-auto" data-aos="zoom-in" style="max-width: 800px; font-size: 1.1rem;">
+            <p class="hero-subtitle text-white opacity-75 mt-3 mb-5 mx-auto" data-aos="zoom-in" style="max-width: 800px; font-size: 1.15rem; font-weight: 300; letter-spacing: 0.5px;">
                 Platform pelatihan profesional terkemuka dengan kurikulum berbasis industri. <br>
                 Belajar dari para ahli dan raih sertifikasi kompetensi hari ini.
             </p>
