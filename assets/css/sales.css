@@ -2,25 +2,26 @@
 
 :root {
     --orange:       #FF6A00;
-    --orange-2:     #FF8800;
-    --orange-dim:   rgba(255,106,0,0.12);
-    --orange-glow:  rgba(255,106,0,0.25);
+    --orange-2:     #FF1A5F;
+    --orange-dim:   rgba(255,106,0,0.15);
+    --orange-glow:  rgba(255,106,0,0.3);
     --cyan:         #00D2FF;
-    --navy:         #0B1120;
-    --navy-light:   #111827;
-    --navy-card:    #161f30;
-    --border:       rgba(255,255,255,0.07);
-    --border-hover: rgba(255,106,0,0.3);
-    --text:         #E2E8F0;
+    --purple:       #8B5CF6;
+    --navy:         #05080F;
+    --navy-light:   #0B101A;
+    --navy-card:    #111827;
+    --border:       rgba(255,255,255,0.08);
+    --border-hover: rgba(255,106,0,0.4);
+    --text:         #F8FAFC;
     --text-muted:   #94A3B8;
-    --grad-primary: linear-gradient(135deg, #FF6A00 0%, #FF8800 100%);
-    --grad-hero:    linear-gradient(135deg, #0B1120 0%, #111827 100%);
-    --grad-card:    linear-gradient(145deg, #161f30, #111827);
+    --grad-primary: linear-gradient(135deg, #FF6A00 0%, #FF1A5F 100%);
+    --grad-hero:    linear-gradient(135deg, #05080F 0%, #0B101A 100%);
+    --grad-card:    linear-gradient(145deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01));
     --radius:       16px;
     --radius-sm:    10px;
-    --shadow-card:  0 8px 32px rgba(0,0,0,0.4);
-    --shadow-glow:  0 0 40px rgba(255,106,0,0.15);
-    --transition:   all 0.25s cubic-bezier(0.4,0,0.2,1);
+    --shadow-card:  0 12px 40px rgba(0,0,0,0.5);
+    --shadow-glow:  0 0 40px rgba(255,106,0,0.25);
+    --transition:   all 0.3s cubic-bezier(0.25,0.8,0.25,1);
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -160,9 +161,9 @@ body {
 .hero-bg {
     position: absolute; inset: 0; z-index: 0;
     background:
-        radial-gradient(ellipse 80% 60% at 10% 50%, rgba(255,106,0,0.08) 0%, transparent 60%),
-        radial-gradient(ellipse 60% 50% at 90% 20%, rgba(0,210,255,0.05) 0%, transparent 55%),
-        radial-gradient(ellipse 50% 40% at 50% 100%, rgba(139,92,246,0.04) 0%, transparent 50%);
+        radial-gradient(ellipse 80% 60% at 10% 50%, rgba(255,106,0,0.1) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 50% at 90% 20%, rgba(0,210,255,0.08) 0%, transparent 55%),
+        radial-gradient(ellipse 50% 40% at 50% 100%, rgba(139,92,246,0.08) 0%, transparent 50%);
 }
 .hero-grid {
     position: absolute; inset: 0; z-index: 0; opacity: 0.025;
@@ -177,13 +178,13 @@ body {
 }
 .hero-orb-1 {
     width: 500px; height: 500px;
-    background: rgba(255,106,0,0.07);
+    background: radial-gradient(circle, rgba(255,106,0,0.15) 0%, rgba(255,26,95,0.05) 100%);
     top: -100px; right: -100px;
     animation: orbFloat 12s ease-in-out infinite alternate;
 }
 .hero-orb-2 {
     width: 400px; height: 400px;
-    background: rgba(0,210,255,0.05);
+    background: radial-gradient(circle, rgba(0,210,255,0.15) 0%, rgba(139,92,246,0.05) 100%);
     bottom: -80px; left: -80px;
     animation: orbFloat 15s ease-in-out infinite alternate-reverse;
 }
@@ -300,10 +301,12 @@ body {
 .hero-preview {
     position: relative; z-index: 1;
     background: var(--grad-card);
-    border: 1px solid rgba(255,255,255,0.08);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(255,255,255,0.1);
     border-radius: 20px;
     padding: 1.5rem;
-    box-shadow: 0 30px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.03);
+    box-shadow: 0 30px 80px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.1);
 }
 .preview-dots { display: flex; gap: 6px; margin-bottom: 1.25rem; }
 .preview-dots span {
@@ -340,7 +343,9 @@ section { padding: 5.5rem 0; }
     border-bottom: 1px solid var(--border);
 }
 .feature-card {
-    background: rgba(255,255,255,0.03);
+    background: linear-gradient(145deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01));
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     border: 1px solid var(--border);
     border-radius: var(--radius);
     padding: 1.75rem;
@@ -396,8 +401,10 @@ section { padding: 5.5rem 0; }
 /* ── PRICING ── */
 .pricing-card {
     background: var(--grad-card);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
     border: 1px solid var(--border);
-    border-radius: 20px; padding: 2rem;
+    border-radius: 24px; padding: 2.25rem;
     transition: var(--transition);
     position: relative; overflow: hidden;
     height: 100%;
@@ -468,10 +475,12 @@ section { padding: 5.5rem 0; }
 
 /* ── CTA SECTION ── */
 .cta-box {
-    background: linear-gradient(135deg, rgba(255,106,0,0.1), rgba(0,210,255,0.05));
-    border: 1px solid rgba(255,106,0,0.2);
-    border-radius: 24px; padding: 4.5rem 2rem;
+    background: linear-gradient(135deg, rgba(255,106,0,0.15), rgba(0,210,255,0.08));
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,106,0,0.25);
+    border-radius: 32px; padding: 4.5rem 2rem;
     text-align: center; position: relative; overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1);
 }
 .cta-box::before {
     content: ''; position: absolute;

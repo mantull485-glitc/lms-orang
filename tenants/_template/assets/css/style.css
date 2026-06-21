@@ -2,16 +2,16 @@
 
 :root {
     /* Brand */
-    --navy:          #0B1120;
-    --navy-light:    #111827;
-    --navy-card:     #161f30;
+    --navy:          #05080F;
+    --navy-light:    #0B101A;
+    --navy-card:     #111827;
     --primary:       #FF6A00;
-    --primary-2:     #FF8800;
-    --primary-grad:  linear-gradient(135deg, #FF6A00, #FF8800);
-    --primary-dim:   rgba(255,106,0,0.12);
-    --primary-glow:  rgba(255,106,0,0.25);
+    --primary-2:     #FF1A5F;
+    --primary-grad:  linear-gradient(135deg, #FF6A00, #FF1A5F);
+    --primary-dim:   rgba(255,106,0,0.15);
+    --primary-glow:  rgba(255,106,0,0.3);
     --secondary:     #00D2FF;
-    --border:        rgba(255,255,255,0.07);
+    --border:        rgba(255,255,255,0.08);
     --border-soft:   rgba(255,255,255,0.04);
     /* Text */
     --text:          #E2E8F0;
@@ -49,8 +49,9 @@ body.dark-theme { background: var(--navy); color: var(--text); }
 body.mesh-bg {
     background: var(--navy);
     background-image:
-        radial-gradient(ellipse at 5% 0%, rgba(255,106,0,0.05) 0%, rgba(255,106,0,0) 50%),
-        radial-gradient(ellipse at 95% 100%, rgba(0,210,255,0.04) 0%, rgba(0,210,255,0) 50%);
+        radial-gradient(ellipse at 5% 0%, rgba(255,106,0,0.08) 0%, transparent 50%),
+        radial-gradient(ellipse at 95% 100%, rgba(0,210,255,0.08) 0%, transparent 50%),
+        radial-gradient(ellipse at 50% 50%, rgba(139,92,246,0.05) 0%, transparent 60%);
 }
 
 /* ── SCROLLBAR ── */
@@ -137,9 +138,9 @@ body.mesh-bg {
 
 /* ── MODERN CARD ── */
 .modern-card {
-    background: rgba(22,31,48,0.65);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
+    background: linear-gradient(145deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01));
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
     border-radius: var(--radius-lg);
     border: 1px solid var(--border);
     box-shadow: var(--shadow-sm);
@@ -153,8 +154,8 @@ body.mesh-bg {
 }
 .modern-card:hover {
     transform: translateY(-6px);
-    box-shadow: var(--shadow), var(--shadow-glow);
-    border-color: rgba(255,106,0,0.18);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.5), var(--shadow-glow);
+    border-color: rgba(255,106,0,0.25);
 }
 .glass-card-premium {
     background: rgba(22,31,48,0.65);
@@ -254,11 +255,12 @@ body.dark-theme .table > :not(caption) > * > * {
 }
 .auth-card-modern {
     width: 100%; max-width: 450px;
-    background: var(--navy-card);
+    background: linear-gradient(145deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01));
+    backdrop-filter: blur(20px);
     border: 1px solid var(--border);
     border-radius: var(--radius-xl);
     padding: 2.75rem;
-    box-shadow: var(--shadow);
+    box-shadow: 0 25px 50px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.1);
 }
 .form-control-modern {
     background: rgba(255,255,255,0.06);
@@ -382,9 +384,12 @@ body.sidebar-is-open { overflow: hidden; }
 
 /* ── STAT / FINANCE CARDS ── */
 .fin-stat-card {
-    background: var(--navy-card); border: 1px solid var(--border);
+    background: linear-gradient(145deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01));
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--border);
     border-radius: var(--radius); padding: 1.25rem;
     transition: var(--transition); position: relative; overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
 }
 .fin-stat-card::before {
     content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
