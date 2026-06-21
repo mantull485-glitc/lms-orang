@@ -372,8 +372,10 @@ body.dark-theme .table > :not(caption) > * > * {
 /* ── ADMIN SIDEBAR ── */
 .admin-sidebar {
     width: var(--sidebar-w);
-    background: var(--navy-light);
-    border-right: 1px solid var(--border);
+    background: rgba(8, 12, 20, 0.6);
+    backdrop-filter: blur(30px);
+    -webkit-backdrop-filter: blur(30px);
+    border-right: 1px solid rgba(255,255,255,0.08);
     position: fixed; height: 100vh; height: 100dvh;
     left: 0; top: 0; z-index: 1030;
     transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
@@ -422,9 +424,9 @@ body.dark-theme .table > :not(caption) > * > * {
 .admin-content {
     flex: 1; margin-left: var(--sidebar-w);
     padding: 2rem; min-height: 100vh; min-height: 100dvh;
-    background: var(--navy);
+    background: transparent;
 }
-body.dark-theme .admin-content { background: var(--navy); }
+body.dark-theme .admin-content { background: transparent; }
 
 /* ── DARK THEME OVERRIDES ── */
 body.dark-theme .bg-white  { background-color: transparent !important; }

@@ -290,81 +290,14 @@ $bulan_names = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Ags','Sep','Okt','Nov
             transition: opacity .2s;
         }
         .action-export:hover { opacity: 0.85; }
-
-        /* ====== Scoped dark content overrides ====== */
-        /* Override Bootstrap CSS variables for dark area */
-        .admin-content {
-            --bs-body-color: #e2e8f0;
-            --bs-body-bg: #0f172a;
-            --bs-table-color: #e2e8f0;
-            --bs-table-striped-color: #e2e8f0;
-            --bs-heading-color: #f1f5f9;
-            color: #e2e8f0;
-            overflow-x: hidden;
-        }
-        .admin-content h1,.admin-content h2,.admin-content h3,
-        .admin-content h4,.admin-content h5,.admin-content h6 { color: #f1f5f9 !important; }
-        .admin-content p { color: #94a3b8 !important; }
-        .admin-content .text-muted { color: #64748b !important; }
-        .admin-content .text-white { color: #fff !important; }
-        .admin-content .fw-bold { color: inherit; }
-        .admin-content .small { color: inherit; }
-
-        /* Cards inside dark area */
-        .admin-content .modern-card {
-            background: rgba(255,255,255,0.04) !important;
-            border: 1px solid rgba(255,255,255,0.07) !important;
-            overflow: hidden;
-        }
-        
-        /* Tables inside dark area */
-        .admin-content .table-modern,
-        .admin-content .table { color: #e2e8f0 !important; }
-        .admin-content .table-modern thead th,
-        .admin-content .table > thead > tr > th { color: #94a3b8 !important; border-color: rgba(255,255,255,0.06) !important; background: rgba(255,255,255,0.04) !important; }
-        .admin-content .table-modern tbody td,
-        .admin-content .table > tbody > tr > td { color: #e2e8f0 !important; border-color: rgba(255,255,255,0.04) !important; background: transparent !important; }
-        .admin-content .table-modern tbody tr:hover td,
-        .admin-content .table > tbody > tr:hover > td { background: rgba(255,255,255,0.04) !important; }
-        
-        /* Form selects - white text idle, dark text when opened */
-        .admin-content .form-select, .admin-content .form-control {
-            color: #fff !important;
-            background-color: rgba(255,255,255,0.06) !important;
-            border-color: rgba(255,255,255,0.1) !important;
-            transition: color 0.15s ease, background-color 0.15s ease;
-        }
-        .admin-content .form-select:focus,
-        .admin-content .form-select:active {
-            color: #1e293b !important;
-            background-color: #fff !important;
-            border-color: #6366f1 !important;
-            box-shadow: 0 0 0 3px rgba(99,102,241,0.25) !important;
-        }
-        .admin-content .form-select option {
-            color: #1e293b;
-            background-color: #fff;
-        }
-
-
-        /* Status badges in dark context */
-        .admin-content .status-pending  { background: rgba(245,158,11,.2)  !important; color: #fbbf24 !important; }
-        .admin-content .status-diterima { background: rgba(34,197,94,.2)   !important; color: #4ade80 !important; }
-        .admin-content .status-selesai  { background: rgba(59,130,246,.2)  !important; color: #60a5fa !important; }
-        .admin-content .status-ditolak  { background: rgba(239,68,68,.2)   !important; color: #f87171 !important; }
-
-        /* Prevent layout bleed */
-        .admin-content .container-fluid { max-width: 100%; overflow-x: hidden; }
-        .admin-content .table-responsive { overflow-x: auto !important; }
-
     </style>
 </head>
-<body class="bg-light">
+<body class="mesh-bg dark-theme">
 
 <div class="admin-wrapper">
     <?php include 'sidebar.php'; ?>
 
-    <div class="admin-content" style="background:#0f172a; min-height:100vh; overflow-x:hidden;">
+    <div class="admin-content" style="min-height:100vh; overflow-x:hidden;">
         <div class="container-fluid">
 
             <!-- ===== Header ===== -->
