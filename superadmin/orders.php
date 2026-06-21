@@ -120,9 +120,9 @@ $total_revenue = $pdo_global->query("SELECT COALESCE(SUM(harga_bayar),0) FROM or
         <!-- Filter -->
         <div class="sa-card mb-3">
             <div class="sa-card-body" style="padding:1rem 1.5rem">
-                <form method="GET" class="d-flex gap-2 flex-wrap align-items-center">
-                    <input type="text" name="q" class="sa-form-control" style="width:240px" placeholder="Cari lembaga / email..." value="<?= htmlspecialchars($search) ?>">
-                    <select name="status" class="sa-form-control" style="width:160px">
+                <form method="GET" class="filter-form">
+                    <input type="text" name="q" class="sa-form-control" placeholder="Cari lembaga / email..." value="<?= htmlspecialchars($search) ?>">
+                    <select name="status" class="sa-form-control">
                         <option value="">Semua Status</option>
                         <option value="pending"  <?= $filter==='pending'?'selected':'' ?>>Pending</option>
                         <option value="diterima" <?= $filter==='diterima'?'selected':'' ?>>Diterima</option>

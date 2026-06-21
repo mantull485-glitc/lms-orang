@@ -203,12 +203,11 @@ if (isset($_GET['detail'])) {
         </div>
         <?php endif; ?>
 
-        <!-- Filter Bar -->
         <div class="sa-card mb-3">
             <div class="sa-card-body" style="padding:1rem 1.5rem">
-                <form method="GET" class="d-flex gap-2 flex-wrap align-items-center">
-                    <input type="text" name="q" class="sa-form-control" style="width:240px" placeholder="Cari nama / email / subdomain..." value="<?= htmlspecialchars($search) ?>">
-                    <select name="status" class="sa-form-control" style="width:160px">
+                <form method="GET" class="filter-form">
+                    <input type="text" name="q" class="sa-form-control" placeholder="Cari nama / email / subdomain..." value="<?= htmlspecialchars($search) ?>">
+                    <select name="status" class="sa-form-control">
                         <option value="">Semua Status</option>
                         <option value="aktif" <?= $filter_status==='aktif'?'selected':'' ?>>Aktif</option>
                         <option value="nonaktif" <?= $filter_status==='nonaktif'?'selected':'' ?>>Nonaktif</option>
@@ -220,7 +219,7 @@ if (isset($_GET['detail'])) {
                     <?php if ($filter_status || $search): ?>
                     <a href="tenants.php" class="btn-sa-outline">Reset</a>
                     <?php endif; ?>
-                    <span class="ms-auto text-muted-sa" style="font-size:.82rem"><?= count($tenants) ?> tenant ditemukan</span>
+                    <span style="font-size:.82rem;color:var(--text-muted);margin-left:auto"><?= count($tenants) ?> tenant ditemukan</span>
                 </form>
             </div>
         </div>
@@ -287,7 +286,7 @@ if (isset($_GET['detail'])) {
                                 // Dengan dynamic single-codebase routing, panel admin selalu dapat diakses langsung tanpa copy folder (kompatibel dengan Vercel & Local)
                                 $folder_exists = true;
                                 ?>
-                                <div class="d-flex gap-1 flex-wrap">
+                                <div class="action-btn-group">
 
                                     <!-- Buka Admin (aktif + folder ada) -->
                                     <?php if ($t['status'] === 'aktif' && $folder_exists && !empty($t['subdomain'])): ?>

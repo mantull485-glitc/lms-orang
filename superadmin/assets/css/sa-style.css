@@ -205,6 +205,9 @@ body {
 ═══════════════════════════════════════════ */
 .sa-content { flex: 1; padding: 2rem; }
 
+/* Fix Bootstrap row gap to work correctly (do NOT override --bs-gutter-x/y) */
+.sa-content .row { --bs-gutter-x: 1rem; --bs-gutter-y: 1rem; }
+
 /* ═══════════════════════════════════════════
    STAT CARDS
 ═══════════════════════════════════════════ */
@@ -446,7 +449,7 @@ body {
 .empty-state { text-align: center; padding: 3rem 1rem; color: var(--text-muted); }
 .empty-state svg { width: 48px; height: 48px; margin: 0 auto 1rem; display: block; opacity: .3; }
 .empty-state p { font-size: .9rem; line-height: 1.6; }
-.g-3 { gap: .875rem !important; }
+/* Removed broken .g-3 override — use Bootstrap's built-in row g-3 */
 
 /* Page header utility */
 .sa-page-header {
@@ -456,6 +459,28 @@ body {
 }
 .sa-page-header-title { font-size: 1.25rem; font-weight: 800; color: #fff; letter-spacing: -.3px; }
 .sa-page-header-sub { font-size: .83rem; color: var(--text-muted); margin-top: 2px; }
+
+/* ══════════════════════════════════════════
+   FILTER BAR
+══════════════════════════════════════════ */
+.filter-form {
+    display: flex; gap: .6rem; flex-wrap: wrap; align-items: center;
+}
+.filter-form .sa-form-control { flex: 1 1 180px; min-width: 0; }
+.filter-form .sa-form-control[type="text"] { flex: 2 1 220px; }
+
+/* ══════════════════════════════════════════
+   ACTION BUTTON GROUP IN TABLE
+══════════════════════════════════════════ */
+.action-btn-group {
+    display: flex; gap: 4px; flex-wrap: wrap; max-width: 220px;
+}
+.action-btn-group .btn-sa-outline,
+.action-btn-group .btn-sa-danger,
+.action-btn-group .btn-sa-success {
+    font-size: .73rem; padding: .28rem .55rem;
+    border-radius: 7px; white-space: nowrap;
+}
 
 /* ═══════════════════════════════════════════
    MOBILE TOPBAR (≤ 768px)
@@ -515,9 +540,10 @@ body {
 
     /* Content padding below mobile topbar */
     .sa-content {
-        padding: 1rem;
-        padding-top: calc(var(--topbar-h) + 1rem);
+        padding: .875rem;
+        padding-top: calc(var(--topbar-h) + .875rem);
     }
+    .sa-content .row { --bs-gutter-x: .75rem; --bs-gutter-y: .75rem; }
 
     /* Hide desktop topbar */
     .sa-topbar { display: none; }
@@ -525,30 +551,39 @@ body {
     /* Show mobile topbar */
     .sa-mobile-topbar { display: flex; }
 
-    /* Stat cards: 2-col grid */
-    .stat-card { padding: 1.1rem; gap: .85rem; }
-    .stat-value { font-size: 1.5rem; }
+    /* Stat cards */
+    .stat-card { padding: 1rem; gap: .75rem; }
+    .stat-value { font-size: 1.45rem; }
     .stat-icon { width: 44px; height: 44px; border-radius: 12px; }
     .stat-icon svg { width: 20px; height: 20px; }
-    .stat-label { font-size: .68rem; }
+    .stat-label { font-size: .66rem; }
 
     /* Table */
     .sa-table { min-width: 560px; }
-    .sa-table th, .sa-table td { padding: .7rem .85rem; font-size: .82rem; }
+    .sa-table th, .sa-table td { padding: .65rem .75rem; font-size: .8rem; }
+
+    /* Action buttons */
+    .action-btn-group { max-width: 180px; gap: 3px; }
 
     /* Modal full-screen */
-    .sa-modal { max-width: calc(100vw - 2rem); padding: 1.5rem; border-radius: 14px; }
+    .sa-modal { max-width: calc(100vw - 1.5rem); padding: 1.25rem; border-radius: 14px; }
 
     /* Card header */
-    .sa-card-header { flex-wrap: wrap; gap: .5rem; padding: .875rem 1.1rem; }
-    .sa-card-body { padding: 1.1rem; }
+    .sa-card-header { flex-wrap: wrap; gap: .5rem; padding: .875rem 1rem; }
+    .sa-card-body { padding: 1rem; }
 
-    /* Buttons smaller */
-    .btn-sa-primary, .btn-sa-outline { font-size: .82rem; padding: .45rem 1rem; }
+    /* Buttons */
+    .btn-sa-primary, .btn-sa-outline { font-size: .82rem; padding: .45rem .9rem; }
 
     /* Page header stacks */
     .sa-page-header { flex-direction: column; align-items: flex-start; margin-bottom: 1.25rem; }
     .sa-page-header .btn-sa-primary { width: 100%; justify-content: center; }
+
+    /* Filter form stacks */
+    .filter-form { flex-direction: column; }
+    .filter-form .sa-form-control { width: 100% !important; flex: none; }
+    .filter-form .btn-sa-primary,
+    .filter-form .btn-sa-outline { width: 100%; justify-content: center; }
 }
 
 @media (max-width: 480px) {
